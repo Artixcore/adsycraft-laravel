@@ -1,14 +1,20 @@
 const API_BASE = '/api';
 
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
 function apiFetch(url, options = {}) {
+    const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': getCsrfToken(),
+        ...options.headers,
+    };
     return fetch(url, {
         ...options,
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            ...options.headers,
-        },
+        headers,
         credentials: 'include',
     });
 }

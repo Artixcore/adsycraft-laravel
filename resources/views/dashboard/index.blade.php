@@ -1,25 +1,12 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Dashboard – {{ config('app.name', 'MetaGrowth Autopilot') }}</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/dashboard.js'])
-</head>
-<body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen p-6">
-    <div class="max-w-5xl mx-auto space-y-8">
-        <header class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">MetaGrowth Autopilot</h1>
-            <div class="flex gap-4">
-                <a href="{{ route('dashboard.connectors') }}" class="text-sm text-[#706f6c] dark:text-[#A1A09A] hover:underline">Connectors</a>
-                <a href="/" class="text-sm text-[#706f6c] dark:text-[#A1A09A] hover:underline">Home</a>
-            </div>
-        </header>
+@extends('layouts.dashboard')
 
-        <section>
+@push('vite')
+    @vite(['resources/js/dashboard.js'])
+@endpush
+
+@section('content')
+<div class="max-w-5xl mx-auto space-y-8">
+    <section>
             <h2 class="text-lg font-medium mb-3">Businesses</h2>
             <div id="business-list" class="space-y-2 mb-4">
                 <p class="text-sm text-[#706f6c]">Loading…</p>
@@ -98,6 +85,5 @@
                 </ul>
             </div>
         </section>
-    </div>
-</body>
-</html>
+</div>
+@endsection

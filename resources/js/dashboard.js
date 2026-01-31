@@ -5,14 +5,16 @@ function getCsrfToken() {
 }
 
 function apiFetch(url, options = {}) {
+    const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': getCsrfToken(),
+        ...options.headers,
+    };
     const opts = {
         ...options,
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            ...options.headers,
-        },
+        headers,
         credentials: 'include',
     };
     return fetch(url, opts);
