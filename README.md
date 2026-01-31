@@ -1,70 +1,72 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MetaGrowth Autopilot
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SaaS for autopilot content: manage businesses, scheduled posts, AI connectors (BYOK), and Meta webhooks. Built with Laravel.
 
-## About Laravel
+**Repository:** [https://github.com/Artixcore/adsycraft-laravel](https://github.com/Artixcore/adsycraft-laravel)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Backend:** Laravel 12, PHP 8.2+, MySQL, Redis (queue, cache, session)
+- **Frontend:** Blade, vanilla JS, Vite, Tailwind CSS
+- **Auth:** Laravel Sanctum (API tokens + session for dashboard)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features
 
-## Learning Laravel
+- **Businesses:** CRUD, timezone, niche, tone, language, posts per day, autopilot on/off
+- **Posts:** Scheduled posts, calendar feed, status (draft / scheduled / published / failed), stub publishing (no real Meta API yet)
+- **AI connectors (BYOK):** OpenAI, Gemini, Grok; encrypted API keys; primary/fallback; test endpoint; stub caption generator when primary AI is set
+- **Meta connector:** OAuth scaffold (status, connect/disconnect placeholder URL; no real Meta API yet)
+- **Webhooks:** `GET` / `POST` `/webhooks/meta` (verification + log payload; no signature verification yet)
+- **Jobs:** GenerateDailyContentJob (idempotent per business per day), PublishDuePostsJob (every 10 min), scheduler
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Routes
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Web:** `/` (welcome), `/dashboard` (auth), `/dashboard/connectors` (auth)
+- **API (auth:sanctum):** `/api/businesses` (CRUD), `/api/businesses/{id}/posts`, `/api/businesses/{id}/calendar`, `/api/businesses/{id}/generate-today`, `/api/businesses/{id}/toggle-autopilot`, `/api/businesses/{id}/ai-connections` (CRUD + make-primary + test), `/api/businesses/{id}/connectors/meta/status`, `/api/businesses/{id}/connectors/meta/connect`, `/api/businesses/{id}/connectors/meta/disconnect`
+- **Webhooks:** `/webhooks/meta` (GET verify, POST handle)
 
-## Laravel Sponsors
+## Requirements
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- PHP 8.2+
+- Composer
+- Node.js / npm
+- MySQL
+- Redis
 
-### Premium Partners
+## Installation
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1. Clone the repo and enter the project directory.
+2. Copy env and generate key:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+3. Configure `.env`: `DB_*`, `REDIS_*`, `QUEUE_CONNECTION=redis`. Optional: `META_WEBHOOK_VERIFY_TOKEN` for webhook verification.
+4. Install dependencies and migrate:
+   ```bash
+   composer install
+   php artisan migrate
+   ```
+5. Build frontend:
+   ```bash
+   npm install && npm run dev
+   ```
+   Or for production: `npm run build`.
+6. Start the app:
+   ```bash
+   php artisan serve
+   ```
+7. **Queue worker** (separate terminal): `php artisan queue:work` or `php artisan queue:work redis --tries=3`.
+8. **Scheduler** (separate terminal): `php artisan schedule:work` (e.g. PublishDuePostsJob every 10 minutes, content:generate-daily hourly).
 
-## Contributing
+## Verification
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## Running locally (MetaGrowth Autopilot)
-
-1. `composer install` (and `composer require laravel/sanctum` if needed)
-2. `php artisan migrate`
-3. `npm install && npm run dev`
-4. `php artisan serve`
-5. **Queue worker:** Run `php artisan queue:work` (or `php artisan queue:work redis --tries=3`) in a separate terminal so jobs (e.g. GenerateDailyContentJob, PublishDuePostsJob) are processed.
-6. **Scheduler:** Run `php artisan schedule:work` in another terminal for cron-like scheduling (e.g. PublishDuePostsJob every 10 minutes, content:generate-daily hourly).
-
-URLs: `/` (welcome), `/dashboard` (auth required), `/webhooks/meta` (GET verification, POST log payload).
+Log in, open `/dashboard` and `/dashboard/connectors`. Create a business, add an AI connection and set it as primary, then trigger “Generate today”. Run the queue worker and confirm posts are created with varied stub captions when a primary AI connection exists.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License. See [LICENSE](https://opensource.org/licenses/MIT) for details.
+
+---
+
+*Powered by [Laravel](https://laravel.com).*
