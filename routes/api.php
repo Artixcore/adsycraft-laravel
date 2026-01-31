@@ -28,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('businesses/{business}/ai-connections/{connection}/test', [AiConnectionController::class, 'test'])->name('businesses.ai-connections.test');
 
     Route::get('businesses/{business}/connectors/meta/status', [MetaConnectorController::class, 'status'])->name('businesses.connectors.meta.status');
-    Route::post('businesses/{business}/connectors/meta/connect', [MetaConnectorController::class, 'connect'])->name('businesses.connectors.meta.connect');
+    Route::post('businesses/{business}/connectors/meta/auth-url', [MetaConnectorController::class, 'authUrl'])->name('businesses.connectors.meta.auth-url');
+    Route::get('businesses/{business}/connectors/meta/assets', [MetaConnectorController::class, 'assets'])->name('businesses.connectors.meta.assets');
+    Route::post('businesses/{business}/connectors/meta/assets/select', [MetaConnectorController::class, 'selectAssets'])->name('businesses.connectors.meta.assets.select');
     Route::post('businesses/{business}/connectors/meta/disconnect', [MetaConnectorController::class, 'disconnect'])->name('businesses.connectors.meta.disconnect');
 });

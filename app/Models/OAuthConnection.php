@@ -19,6 +19,7 @@ class OAuthConnection extends Model
         'expires_at',
         'scopes',
         'connected_at',
+        'meta_user_id',
     ];
 
     protected $hidden = [
@@ -33,6 +34,15 @@ class OAuthConnection extends Model
             'connected_at' => 'datetime',
             'scopes' => 'array',
         ];
+    }
+
+    public function getTokenMaskedAttribute(): ?string
+    {
+        if (! $this->access_token) {
+            return null;
+        }
+        $raw = $this->access_token;
+        return strlen($raw) >= 4 ? '••••'.substr($raw, -4) : '••••••••';
     }
 
     public function businessAccount(): BelongsTo

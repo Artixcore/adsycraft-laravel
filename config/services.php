@@ -36,7 +36,12 @@ return [
     ],
 
     'meta' => [
+        'app_id' => env('META_APP_ID'),
+        'app_secret' => env('META_APP_SECRET'),
+        'redirect_uri' => env('META_REDIRECT_URI', env('APP_URL').'/connectors/meta/callback'),
         'webhook_verify_token' => env('META_WEBHOOK_VERIFY_TOKEN'),
+        'graph_version' => env('META_GRAPH_VERSION', 'v21.0'),
+        'stub' => env('META_CONNECTOR_STUB', false),
     ],
 
 ];

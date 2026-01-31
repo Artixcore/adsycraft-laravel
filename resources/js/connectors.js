@@ -29,6 +29,7 @@ function escapeHtml(text) {
 let selectedBusinessId = null;
 let businesses = [];
 let aiConnections = [];
+let metaAssets = [];
 
 function renderBusinessSelector() {
     const container = document.getElementById('business-selector');
@@ -49,10 +50,24 @@ function renderBusinessSelector() {
             document.getElementById('connectors-content').classList.remove('hidden');
             loadAiConnections(id);
             loadMetaStatus(id);
+            loadMetaAssets(id);
         } else {
             document.getElementById('connectors-content').classList.add('hidden');
         }
     });
+
+    const returnBusinessId = sessionStorage.getItem('meta_connector_business_id');
+    if (returnBusinessId && businesses.some((b) => String(b.id) === returnBusinessId)) {
+        document.getElementById('business-select').value = returnBusinessId;
+        selectedBusinessId = Number(returnBusinessId);
+        document.getElementById('connectors-content').classList.remove('hidden');
+        loadAiConnections(selectedBusinessId);
+        loadMetaStatus(selectedBusinessId);
+        loadMetaAssets(selectedBusinessId);
+        if (new URLSearchParams(window.location.search).get('connected') === '1') {
+            sessionStorage.removeItem('meta_connector_business_id');
+        }
+    }
 }
 
 async function getBusinesses() {
@@ -159,26 +174,76 @@ async function loadMetaStatus(businessId) {
     msgEl.classList.add('hidden');
     if (!res.ok) {
         statusEl.textContent = 'Failed to load Meta status.';
+        document.getElementById('meta-assets-block').classList.add('hidden');
         return;
     }
     const data = await res.json();
     if (data.connected) {
-        statusEl.textContent = 'Connected' + (data.connected_at ? ' at ' + data.connected_at : '') + '.';
+        statusEl.textContent = 'Connected' + (data.connected_at ? ' at ' + data.connected_at : '') + (data.token_masked ? ' (token ' + data.token_masked + ')' : '') + '.';
+        document.getElementById('meta-assets-block').classList.remove('hidden');
     } else {
         statusEl.textContent = 'Not connected.';
+        document.getElementById('meta-assets-block').classList.add('hidden');
     }
 }
 
 async function metaConnect(businessId) {
-    const res = await apiFetch(`${API_BASE}/businesses/${businessId}/connectors/meta/connect`, { method: 'POST' });
+    const res = await apiFetch(`${API_BASE}/businesses/${businessId}/connectors/meta/auth-url`, { method: 'POST' });
     const data = await res.json().catch(() => ({}));
     const msgEl = document.getElementById('meta-message');
     msgEl.classList.remove('hidden');
     if (res.ok && data.url) {
-        msgEl.textContent = 'Placeholder URL (stub): ' + data.url;
+        sessionStorage.setItem('meta_connector_business_id', String(businessId));
+        window.location.href = data.url;
+        return;
+    }
+    msgEl.textContent = data.message || 'Failed to get auth URL.';
+    msgEl.classList.add('text-red-600');
+}
+
+async function loadMetaAssets(businessId) {
+    const listEl = document.getElementById('meta-assets-list');
+    const res = await apiFetch(`${API_BASE}/businesses/${businessId}/connectors/meta/assets`);
+    if (!res.ok) {
+        listEl.innerHTML = '<p class="text-sm text-red-600">Failed to load assets.</p>';
+        return;
+    }
+    const json = await res.json();
+    metaAssets = json.data || [];
+    renderMetaAssets();
+}
+
+function renderMetaAssets() {
+    const listEl = document.getElementById('meta-assets-list');
+    if (!metaAssets.length) {
+        listEl.innerHTML = '<p class="text-sm text-[#706f6c]">No pages yet. Connect Meta to discover.</p>';
+        return;
+    }
+    listEl.innerHTML = metaAssets.map((a) => `
+        <label class="flex items-center gap-2 p-2 border border-gray-200 dark:border-[#3E3E3A] rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
+            <input type="checkbox" class="meta-asset-checkbox rounded" data-page-id="${escapeHtml(a.page_id || '')}" ${a.selected ? 'checked' : ''}>
+            <span class="font-medium">${escapeHtml(a.page_name || 'Page')}</span>
+            ${a.ig_username ? `<span class="text-sm text-[#706f6c]">@${escapeHtml(a.ig_username)}</span>` : ''}
+        </label>
+    `).join('');
+}
+
+async function saveMetaSelection(businessId) {
+    const checkboxes = document.querySelectorAll('.meta-asset-checkbox:checked');
+    const pageIds = Array.from(checkboxes).map((cb) => cb.dataset.pageId).filter(Boolean);
+    const res = await apiFetch(`${API_BASE}/businesses/${businessId}/connectors/meta/assets/select`, {
+        method: 'POST',
+        body: JSON.stringify({ page_ids: pageIds }),
+    });
+    const msgEl = document.getElementById('meta-assets-message');
+    msgEl.classList.remove('hidden');
+    if (res.ok) {
+        msgEl.textContent = 'Selection saved.';
         msgEl.classList.remove('text-red-600');
+        await loadMetaAssets(businessId);
     } else {
-        msgEl.textContent = data.message || 'Connect failed.';
+        const data = await res.json().catch(() => ({}));
+        msgEl.textContent = data.message || 'Failed to save selection.';
         msgEl.classList.add('text-red-600');
     }
 }
@@ -191,6 +256,9 @@ async function metaDisconnect(businessId) {
         msgEl.textContent = 'Disconnected.';
         msgEl.classList.remove('text-red-600');
         await loadMetaStatus(businessId);
+        metaAssets = [];
+        renderMetaAssets();
+        document.getElementById('meta-assets-block').classList.add('hidden');
     } else {
         const data = await res.json().catch(() => ({}));
         msgEl.textContent = data.message || 'Disconnect failed.';
@@ -221,6 +289,27 @@ function init() {
     document.getElementById('btn-meta-disconnect').addEventListener('click', () => {
         if (selectedBusinessId) metaDisconnect(selectedBusinessId);
     });
+
+    document.getElementById('btn-meta-save-selection').addEventListener('click', () => {
+        if (selectedBusinessId) saveMetaSelection(selectedBusinessId);
+    });
+
+    setTimeout(checkUrlParams, 100);
+}
+
+function checkUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('connected') === '1' && selectedBusinessId) {
+        loadMetaStatus(selectedBusinessId);
+        loadMetaAssets(selectedBusinessId);
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    if (params.get('error')) {
+        document.getElementById('meta-message').textContent = params.get('error') === 'invalid_state' ? 'Invalid or expired link. Try connecting again.' : 'Connection failed. Try again.';
+        document.getElementById('meta-message').classList.remove('hidden');
+        document.getElementById('meta-message').classList.add('text-red-600');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 }
 
 if (document.readyState === 'loading') {

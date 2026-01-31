@@ -47,13 +47,22 @@
         </div>
 
         <h2 class="text-lg font-medium mb-3">Meta Connector</h2>
-        <div id="meta-connector-section" class="space-y-2">
+        <div id="meta-connector-section" class="space-y-3">
             <p id="meta-status" class="text-sm text-[#706f6c]">Not connected</p>
             <div class="flex gap-2">
-                <button type="button" id="btn-meta-connect" class="rounded border border-[#19140035] dark:border-[#3E3E3A] px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-[#3E3E3A]">Connect</button>
+                <button type="button" id="btn-meta-connect" class="rounded border border-[#19140035] dark:border-[#3E3E3A] px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-[#3E3E3A]">Connect Meta</button>
                 <button type="button" id="btn-meta-disconnect" class="rounded border border-[#19140035] dark:border-[#3E3E3A] px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-[#3E3E3A]">Disconnect</button>
             </div>
             <p id="meta-message" class="text-sm text-[#706f6c] hidden"></p>
+
+            <div id="meta-assets-block" class="hidden mt-4">
+                <h3 class="text-base font-medium mb-2">Discovered assets (Pages + Instagram)</h3>
+                <div id="meta-assets-list" class="space-y-2 mb-3">
+                    <p class="text-sm text-[#706f6c]">No pages yet. Connect Meta to discover.</p>
+                </div>
+                <button type="button" id="btn-meta-save-selection" class="rounded border border-[#19140035] dark:border-[#3E3E3A] px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-[#3E3E3A]">Save Selection</button>
+                <p id="meta-assets-message" class="text-sm text-[#706f6c] mt-2 hidden"></p>
+            </div>
         </div>
     </section>
 </div>

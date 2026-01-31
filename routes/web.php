@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\MetaOAuthCallbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/connectors/meta/callback', MetaOAuthCallbackController::class)->name('connectors.meta.callback');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
