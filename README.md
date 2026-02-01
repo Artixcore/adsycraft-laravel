@@ -162,6 +162,15 @@ Production-grade SaaS for **Meta Pages + Instagram Business** automation: conten
 
 Log in, open `/dashboard` and `/dashboard/connectors`. Create a workspace (or use backfilled one), create a business under it, add an AI connection and set it as primary, then trigger “Generate today”. Run the queue worker and confirm posts are created. Use `/api-docs` to explore the API.
 
+## Deployment
+
+CI/CD deploys to AWS (EC2, S3, MySQL RDS, ElastiCache Redis) on push to `main`. See [docs/deployment.md](docs/deployment.md) for:
+
+- AWS resources to provision (VPC, EC2, RDS, ElastiCache, S3, IAM)
+- EC2 bootstrap script (`scripts/bootstrap-ec2.sh`)
+- Required GitHub secrets (`EC2_HOST`, `EC2_SSH_KEY`, `EC2_USER`)
+- Production `.env` variables on EC2
+
 ## License
 
 MIT License. See [LICENSE](https://opensource.org/licenses/MIT) for details.
