@@ -7,6 +7,18 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/api-docs', function () {
+    return view('api-docs');
+})->name('api-docs');
+
+Route::get('/openapi.json', function () {
+    $path = storage_path('app/openapi.json');
+
+    return response()->file($path, [
+        'Content-Type' => 'application/json',
+    ]);
+})->name('openapi.spec');
+
 Route::get('/connectors/meta/callback', MetaOAuthCallbackController::class)->name('connectors.meta.callback');
 
 Route::middleware('auth')->group(function () {

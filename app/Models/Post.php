@@ -12,10 +12,16 @@ class Post extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_SCHEDULED = 'scheduled';
+
     public const STATUS_PUBLISHING = 'publishing';
+
     public const STATUS_PUBLISHED = 'published';
+
     public const STATUS_FAILED = 'failed';
+
+    public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
         'business_account_id',

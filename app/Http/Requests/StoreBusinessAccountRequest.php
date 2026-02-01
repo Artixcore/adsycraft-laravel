@@ -14,6 +14,7 @@ class StoreBusinessAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'workspace_id' => ['nullable', 'integer', 'exists:workspaces,id'],
             'name' => ['required', 'string', 'max:255'],
             'niche' => ['nullable', 'string', 'max:255'],
             'website_url' => ['nullable', 'url', 'max:500'],

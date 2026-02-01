@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AddRequestId;
+use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));
+        $middleware->alias(['role' => EnsureUserHasRole::class]);
+        $middleware->api(prepend: [AddRequestId::class]);
+        $middleware->throttleApi('60,1');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -13,6 +13,7 @@ class BusinessAccount extends Model
 
     protected $fillable = [
         'user_id',
+        'workspace_id',
         'name',
         'niche',
         'website_url',
@@ -37,6 +38,11 @@ class BusinessAccount extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     public function metaAssets(): HasMany

@@ -9,16 +9,19 @@ class BusinessAccountPolicy
 {
     public function view(User $user, BusinessAccount $businessAccount): bool
     {
-        return $businessAccount->user_id === $user->id;
+        return $businessAccount->user_id === $user->id
+            || ($businessAccount->workspace_id && $user->workspaces()->where('workspaces.id', $businessAccount->workspace_id)->exists());
     }
 
     public function update(User $user, BusinessAccount $businessAccount): bool
     {
-        return $businessAccount->user_id === $user->id;
+        return $businessAccount->user_id === $user->id
+            || ($businessAccount->workspace_id && $user->workspaces()->where('workspaces.id', $businessAccount->workspace_id)->exists());
     }
 
     public function delete(User $user, BusinessAccount $businessAccount): bool
     {
-        return $businessAccount->user_id === $user->id;
+        return $businessAccount->user_id === $user->id
+            || ($businessAccount->workspace_id && $user->workspaces()->where('workspaces.id', $businessAccount->workspace_id)->exists());
     }
 }

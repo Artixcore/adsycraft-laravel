@@ -1,5 +1,7 @@
 <?php
 
+use App\Jobs\AdsOptimizerJob;
+use App\Jobs\FetchPageInsightsJob;
 use App\Jobs\PublishDuePostsJob;
 use App\Jobs\RefreshMetaTokensJob;
 use Illuminate\Foundation\Inspiring;
@@ -12,4 +14,6 @@ Artisan::command('inspire', function () {
 
 Schedule::job(new PublishDuePostsJob)->everyTenMinutes();
 Schedule::job(new RefreshMetaTokensJob)->dailyAt('02:00');
+Schedule::job(new FetchPageInsightsJob)->dailyAt('02:00');
+Schedule::job(new AdsOptimizerJob)->daily();
 Schedule::command('content:generate-daily')->hourly();
