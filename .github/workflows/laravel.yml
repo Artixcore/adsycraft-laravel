@@ -2,9 +2,13 @@ name: Laravel
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
   pull_request:
-    branches: ['main']
+    branches: ["main"]
+
+concurrency:
+  group: laravel-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   laravel-tests:
@@ -19,10 +23,11 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ppassword"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=10
+
       redis:
         image: redis:7
         ports:
@@ -31,7 +36,7 @@ jobs:
           --health-cmd="redis-cli ping"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=10
 
     steps:
       - uses: actions/checkout@v4
@@ -39,56 +44,102 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, pdo_mysql, redis
           coverage: none
+          tools: composer:v2
+        env:
+          COMPOSER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Copy .env
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install system clients (mysql + redis tools)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-mysql-client redis-tools
+
+      - name: Create .env for CI
+        run: |
+          cp .env.example .env
+          # If you have a CI key in secrets, use it; otherwise key:generate will create one
+          if [ -n "${{ secrets.CI_APP_KEY }}" ]; then
+            echo "APP_KEY=${{ secrets.CI_APP_KEY }}" >> .env
+          fi
+          echo "APP_ENV=testing" >> .env
+          echo "APP_DEBUG=true" >> .env
 
       - name: Install Composer dependencies
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: Generate key
-        run: php artisan key:generate
+      - name: Generate key (if missing)
+        run: |
+          php -r "preg_match('/^APP_KEY=/m', file_get_contents('.env')) || exit(1);" \
+            || php artisan key:generate
 
       - name: Directory permissions
         run: chmod -R 777 storage bootstrap/cache
 
+      - name: Wait for MySQL + Redis
+        run: |
+          echo "Waiting for MySQL..."
+          for i in {1..30}; do
+            mysqladmin ping -h mysql -ppassword --silent && break
+            sleep 2
+          done
+          mysqladmin ping -h mysql -ppassword --silent
+
+          echo "Waiting for Redis..."
+          for i in {1..30}; do
+            redis-cli -h redis ping && break
+            sleep 2
+          done
+          redis-cli -h redis ping
+
+      - name: Clear Laravel caches (CI)
+        run: |
+          php artisan config:clear
+          php artisan cache:clear
+
       - name: Run migrations
         env:
           DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
+          DB_HOST: mysql
           DB_PORT: 3306
           DB_DATABASE: laravel_test
           DB_USERNAME: root
           DB_PASSWORD: password
-          REDIS_HOST: 127.0.0.1
+          REDIS_HOST: redis
           REDIS_PORT: 6379
         run: php artisan migrate --force
 
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Build frontend assets
+      - name: Build frontend assets (Vite)
         run: npm run build
 
       - name: Execute tests
         env:
           DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
+          DB_HOST: mysql
           DB_PORT: 3306
           DB_DATABASE: laravel_test
           DB_USERNAME: root
           DB_PASSWORD: password
-          REDIS_HOST: 127.0.0.1
+
+          REDIS_HOST: redis
           REDIS_PORT: 6379
+
           CACHE_STORE: redis
           QUEUE_CONNECTION: redis
           SESSION_DRIVER: redis
         run: php artisan test
 
-      - name: Upload build artifact
+      - name: Upload Vite build artifact
         uses: actions/upload-artifact@v4
         with:
           name: build
@@ -104,19 +155,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download build artifact
+      # Pull the Vite build from the test job directly into public/build
+      - name: Download build artifact into public/build
         uses: actions/download-artifact@v4
         with:
           name: build
-
-      - name: Restore build to public/build
-        run: |
-          mkdir -p public/build
-          mv build/* public/build/ 2>/dev/null || true
-          rmdir build 2>/dev/null || true
-
-      - name: Install Composer dependencies for deploy
-        run: composer install -q --no-ansi --no-interaction --no-dev --optimize-autoloader --prefer-dist
+          path: public/build
 
       - name: Setup SSH key
         run: |
@@ -131,6 +175,7 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             --exclude='.git' \
             --exclude='node_modules' \
+            --exclude='vendor' \
             --exclude='.env' \
             --exclude='storage/logs/*' \
             --exclude='storage/framework/cache/data/*' \
@@ -146,12 +191,36 @@ jobs:
             ${{ secrets.EC2_USER || 'ubuntu' }}@${{ secrets.EC2_HOST }} << 'REMOTE'
             set -e
             cd /var/www/adsycraft
+
+            # Ownership/permissions
             sudo chown -R www-data:www-data .
+
+            # IMPORTANT: make sure /var/www/adsycraft/.env already exists on the server
+            # (you intentionally exclude .env from rsync)
+
+            # Install PHP deps on server (fast + consistent)
             sudo -u www-data composer install -q --no-ansi --no-interaction --no-dev --optimize-autoloader --prefer-dist
+
+            # Clear old caches first (prevents "haunted deploys")
+            sudo -u www-data php artisan optimize:clear
+
+            # Migrate
             sudo -u www-data php artisan migrate --force
+
+            # OPTIONAL: only keep this if your seeders are SAFE + idempotent
             sudo -u www-data php artisan db:seed --force
+
+            # Cache for performance
             sudo -u www-data php artisan config:cache
             sudo -u www-data php artisan route:cache
+
+            # If you use queues
             sudo -u www-data php artisan queue:restart
+
+            # Create storage symlink if not exists
             sudo -u www-data php artisan storage:link 2>/dev/null || true
+
+            # OPTIONAL: reload services (adjust php version if needed)
+            sudo systemctl reload php8.2-fpm 2>/dev/null || true
+            sudo systemctl reload nginx 2>/dev/null || true
           REMOTE
