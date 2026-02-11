@@ -34,7 +34,7 @@ class EnsureUserHasRole
         if ($allowed === [] || ! in_array($user->role, $allowed, true)) {
             return $request->expectsJson()
                 ? response()->json(['message' => 'Unauthorized.'], 403)
-                : abort(403);
+                : redirect()->route('dashboard');
         }
 
         return $next($request);
