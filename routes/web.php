@@ -78,6 +78,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/calendar', function () {
         return view('dashboard.calendar');
     })->name('dashboard.calendar');
+
+    Route::get('/dashboard/growth-blueprint', function () {
+        return view('dashboard.growth-blueprint');
+    })->name('dashboard.growth-blueprint');
 });
 
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {

@@ -8,19 +8,22 @@ class ContentQualityService
 {
     /**
      * Calculate a content quality score (0-100) for a post.
+     * Rubric: Hook strength 25%, Caption length 25%, Hashtags 25%, Readability 25%.
      */
     public function calculate(Post $post): int
     {
         $caption = $post->caption ?? '';
+        $hook = $post->hook ?? '';
 
-        if (trim($caption) === '') {
+        if (trim($caption) === '' && trim($hook) === '') {
             return 0;
         }
 
-        $lengthScore = $this->scoreCaptionLength($caption);
-        $hashtagScore = $this->scoreHashtags($caption);
-        $hookScore = $this->scoreHookStrength($caption);
-        $readabilityScore = $this->scoreReadability($caption);
+        $effectiveCaption = trim($caption) !== '' ? $caption : $hook;
+        $lengthScore = $this->scoreCaptionLength($effectiveCaption);
+        $hashtagScore = $this->scoreHashtagsFromCaption($effectiveCaption, $post->hashtags ?? []);
+        $hookScore = $this->scoreHookStrength($post->hook ?? $effectiveCaption, $effectiveCaption);
+        $readabilityScore = $this->scoreReadability($effectiveCaption);
 
         $total = ($lengthScore * 0.25) + ($hashtagScore * 0.25) + ($hookScore * 0.25) + ($readabilityScore * 0.25);
 
@@ -50,42 +53,57 @@ class ContentQualityService
     }
 
     /**
-     * Ideal: 3-10 hashtags. None or too many penalize.
+     * Ideal: 5-10 hashtags. 0 or >15 penalize. Uses caption + hashtags array.
      */
-    private function scoreHashtags(string $caption): float
+    private function scoreHashtagsFromCaption(string $caption, array $hashtagsArray): float
     {
         preg_match_all('/#\w+/u', $caption, $matches);
-        $count = count($matches[0] ?? []);
+        $fromCaption = count($matches[0] ?? []);
+        $fromArray = is_array($hashtagsArray) ? count($hashtagsArray) : 0;
+        $count = $fromCaption + $fromArray;
 
         if ($count === 0) {
-            return 40;
+            return 25;
         }
-        if ($count >= 3 && $count <= 10) {
+        if ($count > 15) {
+            return max(25, 100 - ($count - 15) * 5);
+        }
+        if ($count >= 5 && $count <= 10) {
             return 100;
         }
+        if ($count >= 3 && $count < 5) {
+            return 75;
+        }
         if ($count === 1 || $count === 2) {
-            return 60 + $count * 15;
+            return 50 + $count * 10;
         }
 
         return max(50, 100 - ($count - 10) * 5);
     }
 
     /**
-     * Strong hook: first line 50-150 chars, question or CTA.
+     * Hook strength: 0-25 no hook/generic, 26-50 weak, 51-75 clear/some intrigue, 76-100 strong/contrarian.
      */
-    private function scoreHookStrength(string $caption): float
+    private function scoreHookStrength(string $hook, string $caption): float
     {
-        $firstLine = trim(explode("\n", $caption)[0] ?? '');
-        $firstLineLen = mb_strlen($firstLine);
-
-        $score = 50;
-        if ($firstLineLen >= 30 && $firstLineLen <= 150) {
-            $score += 25;
+        $firstLine = trim($hook !== '' ? $hook : explode("\n", $caption)[0] ?? '');
+        if ($firstLine === '') {
+            return 25;
         }
-        if (preg_match('/\?$|^[A-Za-z].*[!.]$/', $firstLine)) {
+
+        $firstLineLen = mb_strlen($firstLine);
+        $score = 50;
+
+        if ($firstLineLen >= 30 && $firstLineLen <= 150) {
             $score += 15;
         }
-        if (preg_match('/\b(share|comment|tag|follow|click|learn|discover|try|check|get)\b/i', $firstLine)) {
+        if (preg_match('/\?$|^[A-Za-z].*[!.]$/', $firstLine)) {
+            $score += 10;
+        }
+        if (preg_match('/\b(share|comment|tag|follow|click|learn|discover|try|check|get|why|how|secret|mistake)\b/i', $firstLine)) {
+            $score += 15;
+        }
+        if (preg_match('/\b(never|always|stop|don\'t|myth|truth|actually)\b/i', $firstLine)) {
             $score += 10;
         }
 

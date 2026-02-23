@@ -28,16 +28,22 @@ class Post extends Model
         'business_account_id',
         'meta_asset_id',
         'content_pillar_id',
+        'post_type',
         'channel',
         'caption',
+        'hook',
+        'cta',
+        'hashtags',
         'media_type',
         'media_prompt',
+        'visual_prompt',
         'media_url',
         'scheduled_at',
         'published_at',
         'status',
         'provider_post_id',
         'error_message',
+        'quality_score',
     ];
 
     protected function casts(): array
@@ -45,6 +51,7 @@ class Post extends Model
         return [
             'scheduled_at' => 'datetime',
             'published_at' => 'datetime',
+            'hashtags' => 'array',
         ];
     }
 

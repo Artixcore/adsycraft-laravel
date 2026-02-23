@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class BusinessAccount extends Model
 {
@@ -73,5 +74,20 @@ class BusinessAccount extends Model
     public function metaAdAccounts(): HasMany
     {
         return $this->hasMany(MetaAdAccount::class);
+    }
+
+    public function growthBlueprints(): HasMany
+    {
+        return $this->hasMany(GrowthBlueprint::class);
+    }
+
+    public function competitorUrls(): HasMany
+    {
+        return $this->hasMany(CompetitorUrl::class);
+    }
+
+    public function marketIntelligence(): HasOne
+    {
+        return $this->hasOne(MarketIntelligence::class);
     }
 }

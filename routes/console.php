@@ -17,3 +17,4 @@ Schedule::job(new RefreshMetaTokensJob)->dailyAt('02:00');
 Schedule::job(new FetchPageInsightsJob)->dailyAt('02:00');
 Schedule::job(new AdsOptimizerJob)->daily();
 Schedule::command('content:generate-daily')->hourly();
+Schedule::command('market-intelligence:refresh-weekly')->hourly();
