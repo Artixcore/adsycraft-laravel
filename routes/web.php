@@ -12,7 +12,23 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
+
+Route::get('/features', function () {
+    return view('features');
+})->name('features');
+
+Route::get('/pricing', function () {
+    return view('pricing');
+})->name('pricing');
+
+Route::get('/about', function () {
+    return view('about');
+})->name('about');
+
+Route::get('/faq', function () {
+    return view('faq');
+})->name('faq');
 
 Route::get('/api-docs', function () {
     return view('api-docs');
@@ -29,6 +45,10 @@ Route::get('/openapi.json', function () {
 Route::get('/connectors/meta/callback', MetaOAuthCallbackController::class)->name('connectors.meta.callback');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/onboarding', function () {
+        return view('onboarding.index');
+    })->name('onboarding');
+
     Route::get('/dashboard', function () {
         return view('dashboard.index');
     })->name('dashboard');

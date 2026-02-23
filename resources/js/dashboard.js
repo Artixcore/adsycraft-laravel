@@ -26,7 +26,7 @@ let businesses = [];
 function renderBusinessList() {
     const container = document.getElementById('business-list');
     if (!businesses.length) {
-        container.innerHTML = '<p class="text-sm text-[#706f6c]">No businesses yet. Create one below.</p>';
+        container.innerHTML = '<p class="text-sm text-zinc-500 dark:text-zinc-400">No businesses yet. Create one below.</p>';
         return;
     }
     container.innerHTML = businesses.map((b) => `
@@ -107,7 +107,10 @@ async function toggleAutopilot(businessId) {
     if (res.ok && data.data) {
         const b = businesses.find((x) => x.id === businessId);
         if (b) b.autopilot_enabled = data.data.autopilot_enabled;
-        document.getElementById('selected-message').textContent = 'Autopilot ' + (data.data.autopilot_enabled ? 'on' : 'off');
+        const msgEl = document.getElementById('selected-message');
+        if (msgEl) msgEl.textContent = 'Autopilot ' + (data.data.autopilot_enabled ? 'on' : 'off');
+        const statusEl = document.getElementById('status-autopilot');
+        if (statusEl) statusEl.textContent = data.data.autopilot_enabled ? 'On' : 'Off';
     }
     await getBusinesses();
     renderBusinessList();

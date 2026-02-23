@@ -8,10 +8,21 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
-    /* Design system: accent (indigo) */
+    /* AdsyCraft design system */
     --color-accent-50: oklch(0.962 0.018 272.314);
     --color-accent-100: oklch(0.93 0.034 272.788);
     --color-accent-500: oklch(0.585 0.233 277.117);
     --color-accent-600: oklch(0.511 0.262 276.966);
     --color-accent-700: oklch(0.457 0.24 277.023);
+    /* Premium palette */
+    --color-adsy-bg: #FAFAF9;
+    --color-adsy-bg-dark: #0C0C0C;
+    --color-adsy-surface: #FFFFFF;
+    --color-adsy-surface-dark: #161616;
+    --color-adsy-text: #18181B;
+    --color-adsy-text-dark: #FAFAFA;
+    --color-adsy-text-muted: #71717A;
+    --color-adsy-text-muted-dark: #A1A1AA;
+    --color-adsy-border: #E4E4E7;
+    --color-adsy-border-dark: #27272A;
 }

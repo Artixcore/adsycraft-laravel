@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Dashboard' }} – {{ config('app.name', 'Adsycraft') }}</title>
+    <title>{{ $title ?? 'Dashboard' }} – {{ config('app.name', 'AdsyCraft') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('vite')
 </head>
-<body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen font-sans antialiased">
+<body class="bg-[#FAFAF9] dark:bg-[#0C0C0C] text-[#18181B] dark:text-[#FAFAFA] min-h-screen font-sans antialiased">
     <div class="flex flex-col min-h-screen">
         @include('partials.app-header')
         <main class="flex-1 p-4 sm:p-6">
