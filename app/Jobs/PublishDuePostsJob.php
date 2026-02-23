@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Post;
-use App\Models\PostLog;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,48 +31,6 @@ class PublishDuePostsJob implements ShouldQueue
 
         foreach ($duePosts as $post) {
             $this->publishPost($post);
-        }
-    }
-
-    protected function publishPost(Post $post): void
-    {
-        $post->update(['status' => Post::STATUS_PUBLISHING]);
-
-        try {
-            // Stub: no Meta API call; mark as published and log.
-            $providerPostId = 'stub_' . $post->id;
-
-            $post->update([
-                'status' => Post::STATUS_PUBLISHED,
-                'published_at' => now(),
-                'provider_post_id' => $providerPostId,
-            ]);
-
-            PostLog::create([
-                'post_id' => $post->id,
-                'level' => 'info',
-                'message' => 'Published (stub)',
-                'meta' => ['id' => $providerPostId, 'success' => true],
-            ]);
-        } catch (\Throwable $e) {
-            $post->update([
-                'status' => Post::STATUS_FAILED,
-                'error_message' => $e->getMessage(),
-            ]);
-
-            PostLog::create([
-                'post_id' => $post->id,
-                'level' => 'error',
-                'message' => $e->getMessage(),
-                'meta' => ['error' => $e->getMessage()],
-            ]);
-
-            Log::error('PublishDuePostsJob: failed to publish post', [
-                'post_id' => $post->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            throw $e;
         }
     }
 

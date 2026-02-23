@@ -63,6 +63,10 @@ Route::middleware('auth')->group(function () {
         return view('dashboard.ad-library');
     })->name('dashboard.ad-library');
 
+    Route::get('/dashboard/ads', function () {
+        return view('dashboard.ads');
+    })->name('dashboard.ads');
+
     Route::get('/dashboard/calendar', function () {
         return view('dashboard.calendar');
     })->name('dashboard.calendar');

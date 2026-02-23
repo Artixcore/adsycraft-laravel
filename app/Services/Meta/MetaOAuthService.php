@@ -17,6 +17,9 @@ class MetaOAuthService
     private const SCOPES = [
         'pages_show_list',
         'pages_read_engagement',
+        'pages_manage_posts',
+        'instagram_basic',
+        'instagram_content_publish',
     ];
 
     public function getAuthUrl(Request $request, BusinessAccount $business, User $user): string

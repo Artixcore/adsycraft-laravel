@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BrandVoiceController;
 use App\Http\Controllers\Api\BusinessAccountController;
 use App\Http\Controllers\Api\CalendarController;
+use App\Http\Controllers\Api\MetaAdsController;
 use App\Http\Controllers\Api\MetaConnectorController;
 use App\Http\Controllers\Api\PageInsightController;
 use App\Http\Controllers\Api\PostController;
@@ -60,6 +61,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('businesses/{business}/connectors/meta/assets/select', [MetaConnectorController::class, 'selectAssets'])->name('businesses.connectors.meta.assets.select');
     Route::post('businesses/{business}/connectors/meta/disconnect', [MetaConnectorController::class, 'disconnect'])->name('businesses.connectors.meta.disconnect');
     Route::get('businesses/{business}/connectors/meta/debug', [MetaConnectorController::class, 'debug'])->name('businesses.connectors.meta.debug');
+
+    Route::get('businesses/{business}/ads/accounts', [MetaAdsController::class, 'adAccounts'])->name('businesses.ads.accounts');
+    Route::post('businesses/{business}/ads/accounts/select', [MetaAdsController::class, 'selectAdAccount'])->name('businesses.ads.accounts.select');
 
     Route::prefix('ad-library')->group(function () {
         Route::get('config', [AdLibraryController::class, 'config'])->name('ad-library.config');

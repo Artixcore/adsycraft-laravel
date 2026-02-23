@@ -69,4 +69,9 @@ class BusinessAccount extends Model
     {
         return $this->hasMany(OAuthConnection::class);
     }
+
+    public function metaAdAccounts(): HasMany
+    {
+        return $this->hasMany(MetaAdAccount::class);
+    }
 }

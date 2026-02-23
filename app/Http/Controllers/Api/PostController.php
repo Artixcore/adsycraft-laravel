@@ -9,9 +9,9 @@ use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Models\BusinessAccount;
 use App\Models\Post;
-use App\Models\PostLog;
 use App\Services\AI\AIManager;
 use App\Services\AI\StubCaptionGenerator;
+use App\Services\Meta\MetaPublishingService;
 use App\Support\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -115,10 +115,9 @@ class PostController extends Controller
         $post->update([
             'meta_asset_id' => $request->input('meta_asset_id'),
             'scheduled_at' => now(),
-            'status' => Post::STATUS_PUBLISHING,
         ]);
-        $this->publishPost($post);
-        $post->refresh();
+
+        $post = MetaPublishingService::make()->publishAndUpdatePost($post);
 
         return ApiResponse::success($post, 'Post published.');
     }
@@ -178,36 +177,6 @@ class PostController extends Controller
     {
         if ($post->business_account_id !== $business->id) {
             abort(404);
-        }
-    }
-
-    private function publishPost(Post $post): void
-    {
-        try {
-            $providerPostId = 'stub_'.$post->id;
-            $post->update([
-                'status' => Post::STATUS_PUBLISHED,
-                'published_at' => now(),
-                'provider_post_id' => $providerPostId,
-            ]);
-            PostLog::create([
-                'post_id' => $post->id,
-                'level' => 'info',
-                'message' => 'Published (stub)',
-                'meta' => ['id' => $providerPostId, 'success' => true],
-            ]);
-        } catch (\Throwable $e) {
-            $post->update([
-                'status' => Post::STATUS_FAILED,
-                'error_message' => $e->getMessage(),
-            ]);
-            PostLog::create([
-                'post_id' => $post->id,
-                'level' => 'error',
-                'message' => $e->getMessage(),
-                'meta' => ['error' => $e->getMessage()],
-            ]);
-            throw $e;
         }
     }
 }
