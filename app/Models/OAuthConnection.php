@@ -10,6 +10,8 @@ class OAuthConnection extends Model
 {
     use HasFactory;
 
+    protected $table = 'oauth_connections';
+
     public const PROVIDER_META = 'meta';
 
     protected $fillable = [
@@ -42,6 +44,7 @@ class OAuthConnection extends Model
             return null;
         }
         $raw = $this->access_token;
+
         return strlen($raw) >= 4 ? '••••'.substr($raw, -4) : '••••••••';
     }
 

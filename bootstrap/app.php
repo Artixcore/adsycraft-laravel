@@ -5,6 +5,8 @@ use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -27,5 +29,44 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->throttleApi('60,1');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (! $request->expectsJson() && ! $request->is('api/*')) {
+                return null;
+            }
+
+            $status = 500;
+            $message = 'Server error. Please try again.';
+            $errors = null;
+
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                $status = 422;
+                $message = $e->getMessage();
+                $errors = $e->errors();
+            } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                $status = 401;
+                $message = 'Unauthenticated. Please log in again.';
+            } elseif ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                $status = 403;
+                $message = $e->getMessage() ?: 'Forbidden.';
+            } elseif ($e instanceof \Illuminate\Session\TokenMismatchException) {
+                $status = 419;
+                $message = 'Session expired. Please refresh and try again.';
+            } elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                $status = 404;
+                $message = 'Record not found.';
+            } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                $status = $e->getStatusCode();
+                $message = $e->getMessage() ?: 'Request failed.';
+            }
+
+            if ($status >= 500) {
+                Log::error($e->getMessage(), ['exception' => $e]);
+            }
+
+            return response()->json([
+                'ok' => false,
+                'message' => $message,
+                'errors' => $errors,
+            ], $status);
+        });
     })->create();

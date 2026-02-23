@@ -42,6 +42,13 @@ return [
         'webhook_verify_token' => env('META_WEBHOOK_VERIFY_TOKEN'),
         'graph_version' => env('META_GRAPH_VERSION', 'v21.0'),
         'stub' => env('META_CONNECTOR_STUB', false),
+        'ad_library' => [
+            'enabled' => env('META_AD_LIBRARY_ENABLED', false),
+            'default_country' => env('META_AD_LIBRARY_DEFAULT_COUNTRY', 'US'),
+            'cache_ttl_seconds' => env('META_AD_LIBRARY_CACHE_TTL_SECONDS', 3600),
+            'rate_limit_backoff' => env('META_AD_LIBRARY_RATE_LIMIT_BACKOFF', 2),
+            'access_token' => env('META_AD_LIBRARY_ACCESS_TOKEN'),
+        ],
     ],
 
 ];

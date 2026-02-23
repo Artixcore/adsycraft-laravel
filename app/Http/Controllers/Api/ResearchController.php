@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessAccount;
 use App\Models\MetaAsset;
 use App\Models\ProductResearch;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -37,10 +38,7 @@ class ResearchController extends Controller
             ]
         );
 
-        return response()->json([
-            'message' => 'Research triggered (stub).',
-            'meta_asset_id' => $asset->id,
-        ], 202);
+        return ApiResponse::success(['meta_asset_id' => $asset->id], 'Research triggered.', null, 202);
     }
 
     public function results(Request $request, BusinessAccount $business): JsonResponse
@@ -59,6 +57,6 @@ class ResearchController extends Controller
 
         $results = $query->get();
 
-        return response()->json(['data' => $results]);
+        return ApiResponse::success($results);
     }
 }

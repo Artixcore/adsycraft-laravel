@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ad_sets', function (Blueprint $table) {
+        Schema::create('ad_library_collections', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('name');
             $table->timestamps();
+
+            $table->index('user_id');
         });
     }
 
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ad_sets');
+        Schema::dropIfExists('ad_library_collections');
     }
 };

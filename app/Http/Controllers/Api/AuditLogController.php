@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Workspace;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -50,7 +51,7 @@ class AuditLogController extends Controller
         $total = $logs->count();
         $end = $total > 0 ? $total - 1 : 0;
 
-        return response()->json(['data' => $logs])
+        return ApiResponse::success($logs, 'OK', ['total' => $total])
             ->header('Content-Range', "audit-logs 0-{$end}/{$total}");
     }
 }

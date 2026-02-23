@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessAccount;
 use App\Models\OAuthConnection;
 use App\Services\Meta\MetaOAuthService;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -31,13 +32,14 @@ class MetaConnectorController extends Controller
         $connection = $business->oauthConnections()->where('provider', OAuthConnection::PROVIDER_META)->first();
 
         $connected = $connection && $connection->access_token;
-
-        return response()->json([
+        $data = [
             'connected' => $connected,
             'connected_at' => $connection?->connected_at?->toIso8601String(),
             'scopes' => $connection?->scopes,
             'token_masked' => $connection ? $connection->token_masked : null,
-        ]);
+        ];
+
+        return ApiResponse::success($data);
     }
 
     public function assets(Request $request, BusinessAccount $business): JsonResponse
@@ -55,7 +57,7 @@ class MetaConnectorController extends Controller
             ];
         });
 
-        return response()->json(['data' => $assets]);
+        return ApiResponse::success($assets);
     }
 
     public function selectAssets(Request $request, BusinessAccount $business): JsonResponse
@@ -74,7 +76,7 @@ class MetaConnectorController extends Controller
             $business->metaAssets()->whereNotNull('page_id')->whereIn('page_id', $pageIds)->update(['selected' => true]);
         }
 
-        return response()->json(['message' => 'Selection saved.']);
+        return ApiResponse::success(null, 'Selection saved.');
     }
 
     public function disconnect(Request $request, BusinessAccount $business): JsonResponse
@@ -95,6 +97,6 @@ class MetaConnectorController extends Controller
 
         $business->metaAssets()->whereNotNull('page_id')->delete();
 
-        return response()->json(['connected' => false]);
+        return ApiResponse::success(['connected' => false], 'Disconnected.');
     }
 }

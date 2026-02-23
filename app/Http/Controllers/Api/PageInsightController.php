@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessAccount;
 use App\Models\PageInsight;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -38,6 +39,6 @@ class PageInsightController extends Controller
 
         $insights = $query->limit(100)->get();
 
-        return response()->json(['data' => $insights]);
+        return ApiResponse::success($insights);
     }
 }

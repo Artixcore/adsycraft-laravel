@@ -7,6 +7,7 @@ use App\Http\Requests\StoreBrandVoiceRequest;
 use App\Http\Requests\UpdateBrandVoiceRequest;
 use App\Models\BrandVoice;
 use App\Models\Workspace;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,7 @@ class BrandVoiceController extends Controller
         $data['workspace_id'] = $workspace->id;
         $voice = BrandVoice::create($data);
 
-        return response()->json(['data' => $voice->fresh()], 201);
+        return ApiResponse::success($voice->fresh(), 'Brand voice created.', null, 201);
     }
 
     public function show(Request $request, Workspace $workspace, BrandVoice $brandVoice): JsonResponse
@@ -41,7 +42,7 @@ class BrandVoiceController extends Controller
         $this->ensureUserInWorkspace($request->user(), $workspace);
         $this->ensureBrandVoiceInWorkspace($brandVoice, $workspace);
 
-        return response()->json(['data' => $brandVoice->load('metaAsset')]);
+        return ApiResponse::success($brandVoice->load('metaAsset'));
     }
 
     public function update(UpdateBrandVoiceRequest $request, Workspace $workspace, BrandVoice $brandVoice): JsonResponse
@@ -49,7 +50,7 @@ class BrandVoiceController extends Controller
         $this->ensureBrandVoiceInWorkspace($brandVoice, $workspace);
         $brandVoice->update($request->validated());
 
-        return response()->json(['data' => $brandVoice->fresh()]);
+        return ApiResponse::success($brandVoice->fresh(), 'Brand voice updated.');
     }
 
     public function destroy(Request $request, Workspace $workspace, BrandVoice $brandVoice): JsonResponse
@@ -58,7 +59,7 @@ class BrandVoiceController extends Controller
         $this->ensureBrandVoiceInWorkspace($brandVoice, $workspace);
         $brandVoice->delete();
 
-        return response()->json(null, 204);
+        return ApiResponse::success(null, 'Brand voice deleted.', null, 200);
     }
 
     private function ensureUserInWorkspace($user, Workspace $workspace): void

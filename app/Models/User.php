@@ -80,4 +80,14 @@ class User extends Authenticatable
         return $this->belongsToMany(Workspace::class, 'workspace_user')
             ->withTimestamps();
     }
+
+    public function adLibrarySearches(): HasMany
+    {
+        return $this->hasMany(AdLibrarySearch::class);
+    }
+
+    public function adLibraryCollections(): HasMany
+    {
+        return $this->hasMany(AdLibraryCollection::class);
+    }
 }

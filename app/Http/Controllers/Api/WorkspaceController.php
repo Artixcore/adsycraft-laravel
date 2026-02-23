@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreWorkspaceRequest;
 use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Models\Workspace;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,7 +21,7 @@ class WorkspaceController extends Controller
         $total = $workspaces->count();
         $end = $total > 0 ? $total - 1 : 0;
 
-        return response()->json(['data' => $workspaces])
+        return ApiResponse::success($workspaces, 'OK', ['total' => $total])
             ->header('Content-Range', "workspaces 0-{$end}/{$total}");
     }
 
@@ -29,21 +30,21 @@ class WorkspaceController extends Controller
         $workspace = Workspace::createWithSlug($request->validated());
         $workspace->users()->attach($request->user()->id);
 
-        return response()->json(['data' => $workspace->fresh()], 201);
+        return ApiResponse::success($workspace->fresh(), 'Workspace created.', null, 201);
     }
 
     public function show(Request $request, Workspace $workspace): JsonResponse
     {
         $this->ensureUserInWorkspace($request->user(), $workspace);
 
-        return response()->json(['data' => $workspace->load('businessAccounts')]);
+        return ApiResponse::success($workspace->load('businessAccounts'));
     }
 
     public function update(UpdateWorkspaceRequest $request, Workspace $workspace): JsonResponse
     {
         $workspace->update($request->validated());
 
-        return response()->json(['data' => $workspace->fresh()]);
+        return ApiResponse::success($workspace->fresh(), 'Workspace updated.');
     }
 
     public function destroy(Request $request, Workspace $workspace): JsonResponse
@@ -51,7 +52,7 @@ class WorkspaceController extends Controller
         $this->ensureUserInWorkspace($request->user(), $workspace);
         $workspace->delete();
 
-        return response()->json(null, 204);
+        return ApiResponse::success(null, 'Workspace deleted.', null, 200);
     }
 
     private function ensureUserInWorkspace($user, Workspace $workspace): void

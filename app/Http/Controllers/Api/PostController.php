@@ -10,6 +10,7 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Models\BusinessAccount;
 use App\Models\Post;
 use App\Models\PostLog;
+use App\Support\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class PostController extends Controller
         $total = $items->count();
         $end = $total > 0 ? $total - 1 : 0;
 
-        return response()->json(['data' => $items])
+        return ApiResponse::success($items, 'OK', ['total' => $total])
             ->header('Content-Range', "posts 0-{$end}/{$total}");
     }
 
@@ -59,7 +60,7 @@ class PostController extends Controller
         $this->authorizeForUser($request->user(), 'view', $business);
         $this->ensurePostBelongsToBusiness($post, $business);
 
-        return response()->json(['data' => $post->load(['metaAsset', 'contentPillar'])]);
+        return ApiResponse::success($post->load(['metaAsset', 'contentPillar']));
     }
 
     public function update(UpdatePostRequest $request, BusinessAccount $business, Post $post): JsonResponse
@@ -67,7 +68,7 @@ class PostController extends Controller
         $this->ensurePostBelongsToBusiness($post, $business);
         $post->update($request->validated());
 
-        return response()->json(['data' => $post->fresh()]);
+        return ApiResponse::success($post->fresh(), 'Post updated.');
     }
 
     public function destroy(Request $request, BusinessAccount $business, Post $post): JsonResponse
@@ -76,14 +77,14 @@ class PostController extends Controller
         $this->ensurePostBelongsToBusiness($post, $business);
         $post->delete();
 
-        return response()->json(null, 204);
+        return ApiResponse::success(null, 'Post deleted.', null, 200);
     }
 
     public function schedule(SchedulePostRequest $request, BusinessAccount $business, Post $post): JsonResponse
     {
         $this->ensurePostBelongsToBusiness($post, $business);
         if ($post->status !== Post::STATUS_DRAFT) {
-            return response()->json(['message' => 'Only drafts can be scheduled.'], 422);
+            return ApiResponse::error('Only drafts can be scheduled.', null, 422);
         }
         $scheduledAt = Carbon::parse($request->input('scheduled_at'), $request->input('timezone') ?? $business->timezone ?? 'UTC');
         $post->update([
@@ -92,7 +93,7 @@ class PostController extends Controller
             'status' => Post::STATUS_SCHEDULED,
         ]);
 
-        return response()->json(['data' => $post->fresh()]);
+        return ApiResponse::success($post->fresh(), 'Post scheduled.');
     }
 
     public function publishNow(PublishPostRequest $request, BusinessAccount $business, Post $post): JsonResponse
@@ -109,7 +110,7 @@ class PostController extends Controller
         $this->publishPost($post);
         $post->refresh();
 
-        return response()->json(['data' => $post]);
+        return ApiResponse::success($post, 'Post published.');
     }
 
     public function calendar(Request $request, BusinessAccount $business): JsonResponse
@@ -130,7 +131,7 @@ class PostController extends Controller
             $query->where('scheduled_at', '<=', Carbon::parse($request->input('to'))->endOfDay());
         }
 
-        return response()->json(['data' => $query->get()]);
+        return ApiResponse::success($query->get());
     }
 
     private function ensurePostBelongsToBusiness(Post $post, BusinessAccount $business): void

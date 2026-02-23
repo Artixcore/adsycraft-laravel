@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserMetadataRequest;
 use App\Http\Requests\UpdateUserMetadataRequest;
 use App\Models\UserMetadata;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,7 +26,7 @@ class UserMetadataController extends Controller
         }
         $items = $query->get()->makeHidden(['value']);
 
-        return response()->json(['data' => $items]);
+        return ApiResponse::success($items);
     }
 
     public function store(StoreUserMetadataRequest $request): JsonResponse
@@ -46,7 +47,7 @@ class UserMetadataController extends Controller
             abort(404);
         }
 
-        return response()->json(['data' => $metadata]);
+        return ApiResponse::success($metadata);
     }
 
     public function update(UpdateUserMetadataRequest $request, UserMetadata $metadata): JsonResponse
@@ -63,6 +64,6 @@ class UserMetadataController extends Controller
         }
         $metadata->delete();
 
-        return response()->json(null, 204);
+        return ApiResponse::success(null, 'Metadata deleted.', null, 200);
     }
 }

@@ -56,6 +56,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/connectors', function () {
         return view('dashboard.connectors');
     })->name('dashboard.connectors');
+
+    Route::get('/dashboard/ad-library', function () {
+        return view('dashboard.ad-library');
+    })->name('dashboard.ad-library');
 });
 
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {

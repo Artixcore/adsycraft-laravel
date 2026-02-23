@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdLibraryController;
 use App\Http\Controllers\Api\AdsController;
 use App\Http\Controllers\Api\AiConnectionController;
 use App\Http\Controllers\Api\AuditLogController;
@@ -61,4 +62,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('businesses/{business}/connectors/meta/assets', [MetaConnectorController::class, 'assets'])->name('businesses.connectors.meta.assets');
     Route::post('businesses/{business}/connectors/meta/assets/select', [MetaConnectorController::class, 'selectAssets'])->name('businesses.connectors.meta.assets.select');
     Route::post('businesses/{business}/connectors/meta/disconnect', [MetaConnectorController::class, 'disconnect'])->name('businesses.connectors.meta.disconnect');
+
+    Route::prefix('ad-library')->group(function () {
+        Route::get('config', [AdLibraryController::class, 'config'])->name('ad-library.config');
+        Route::post('search', [AdLibraryController::class, 'search'])->name('ad-library.search');
+        Route::get('searches', [AdLibraryController::class, 'searchesIndex'])->name('ad-library.searches.index');
+        Route::post('searches', [AdLibraryController::class, 'searchesStore'])->name('ad-library.searches.store');
+        Route::delete('searches/{id}', [AdLibraryController::class, 'searchesDestroy'])->name('ad-library.searches.destroy');
+        Route::get('collections', [AdLibraryController::class, 'collectionsIndex'])->name('ad-library.collections.index');
+        Route::post('collections', [AdLibraryController::class, 'collectionsStore'])->name('ad-library.collections.store');
+        Route::get('collections/{collection}/items', [AdLibraryController::class, 'collectionsShowItems'])->name('ad-library.collections.items');
+        Route::post('collections/{collection}/items', [AdLibraryController::class, 'collectionsAddItem'])->name('ad-library.collections.items.store');
+        Route::delete('collections/{collection}/items/{item}', [AdLibraryController::class, 'collectionsRemoveItem'])->name('ad-library.collections.items.destroy');
+    });
 });

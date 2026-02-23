@@ -7,6 +7,7 @@ use App\Http\Requests\StoreAiConnectionRequest;
 use App\Http\Requests\UpdateAiConnectionRequest;
 use App\Models\AiConnection;
 use App\Models\BusinessAccount;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +41,7 @@ class AiConnectionController extends Controller
             return $connection;
         });
 
-        return response()->json(['data' => $connection->fresh()], 201);
+        return ApiResponse::success($connection->fresh(), 'Connection added.', null, 201);
     }
 
     public function update(UpdateAiConnectionRequest $request, BusinessAccount $business, AiConnection $connection): JsonResponse
@@ -61,7 +62,7 @@ class AiConnectionController extends Controller
             $connection->update($data);
         });
 
-        return response()->json(['data' => $connection->fresh()]);
+        return ApiResponse::success($connection->fresh(), 'Connection updated.');
     }
 
     public function destroy(Request $request, BusinessAccount $business, AiConnection $connection): JsonResponse
@@ -74,7 +75,7 @@ class AiConnectionController extends Controller
 
         $connection->delete();
 
-        return response()->json(null, 204);
+        return ApiResponse::success(null, 'Connection deleted.', null, 200);
     }
 
     public function makePrimary(Request $request, BusinessAccount $business, AiConnection $connection): JsonResponse
@@ -90,7 +91,7 @@ class AiConnectionController extends Controller
             $connection->update(['is_primary' => true]);
         });
 
-        return response()->json(['data' => $connection->fresh()]);
+        return ApiResponse::success($connection->fresh(), 'Primary connection updated.');
     }
 
     public function test(Request $request, BusinessAccount $business, AiConnection $connection): JsonResponse
@@ -103,11 +104,11 @@ class AiConnectionController extends Controller
 
         $key = $connection->api_key;
         if (strlen($key) < 10) {
-            return response()->json(['ok' => false, 'message' => 'Invalid key format.'], 422);
+            return ApiResponse::error('Invalid key format.', null, 422);
         }
 
         $connection->update(['last_tested_at' => now()]);
 
-        return response()->json(['ok' => true, 'message' => 'Connection validated.']);
+        return ApiResponse::success(null, 'Connection validated.');
     }
 }

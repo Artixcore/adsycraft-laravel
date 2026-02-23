@@ -7,6 +7,7 @@ use App\Http\Requests\StoreBusinessAccountRequest;
 use App\Http\Requests\UpdateBusinessAccountRequest;
 use App\Jobs\GenerateDailyContentJob;
 use App\Models\BusinessAccount;
+use App\Support\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,14 +40,14 @@ class BusinessAccountController extends Controller
         }
         $account = $request->user()->businessAccounts()->create($data);
 
-        return response()->json(['data' => $account], 201);
+        return ApiResponse::success($account, 'Business created.', null, 201);
     }
 
     public function show(Request $request, BusinessAccount $business): JsonResponse
     {
         $this->authorizeForUser($request->user(), 'view', $business);
 
-        return response()->json(['data' => $business]);
+        return ApiResponse::success($business);
     }
 
     public function update(UpdateBusinessAccountRequest $request, BusinessAccount $business): JsonResponse
@@ -55,7 +56,7 @@ class BusinessAccountController extends Controller
 
         $business->update($request->validated());
 
-        return response()->json(['data' => $business->fresh()]);
+        return ApiResponse::success($business->fresh(), 'Business updated.');
     }
 
     public function destroy(Request $request, BusinessAccount $business): JsonResponse
@@ -64,7 +65,7 @@ class BusinessAccountController extends Controller
 
         $business->delete();
 
-        return response()->json(null, 204);
+        return ApiResponse::success(null, 'Business deleted.', null, 200);
     }
 
     public function toggleAutopilot(Request $request, BusinessAccount $business): JsonResponse
@@ -73,7 +74,7 @@ class BusinessAccountController extends Controller
 
         $business->update(['autopilot_enabled' => ! $business->autopilot_enabled]);
 
-        return response()->json(['data' => $business->fresh()]);
+        return ApiResponse::success($business->fresh(), 'Autopilot updated.');
     }
 
     public function generateToday(Request $request, BusinessAccount $business): JsonResponse
@@ -83,8 +84,6 @@ class BusinessAccountController extends Controller
         $date = $request->input('date', Carbon::today($business->timezone)->toDateString());
         GenerateDailyContentJob::dispatch($business->id, $date);
 
-        return response()->json([
-            'message' => 'GenerateDailyContentJob dispatched for '.$date,
-        ], 202);
+        return ApiResponse::success(null, 'Job dispatched.', null, 202);
     }
 }

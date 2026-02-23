@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ReplyMessageJob;
 use App\Models\BusinessAccount;
 use App\Models\Conversation;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,7 @@ class InboxController extends Controller
 
         $conversations = $query->limit(50)->get();
 
-        return response()->json(['data' => $conversations]);
+        return ApiResponse::success($conversations);
     }
 
     public function messages(Request $request, BusinessAccount $business, Conversation $conversation): JsonResponse
@@ -45,7 +46,7 @@ class InboxController extends Controller
 
         $messages = $conversation->messages()->orderBy('created_at')->paginate(20);
 
-        return response()->json(['data' => $messages->items(), 'meta' => ['current_page' => $messages->currentPage(), 'last_page' => $messages->lastPage()]]);
+        return ApiResponse::success($messages->items(), 'OK', ['current_page' => $messages->currentPage(), 'last_page' => $messages->lastPage()]);
     }
 
     public function reply(Request $request, BusinessAccount $business, Conversation $conversation): JsonResponse
@@ -59,6 +60,6 @@ class InboxController extends Controller
 
         ReplyMessageJob::dispatch($conversation->id, $request->input('text'));
 
-        return response()->json(['message' => 'Reply queued.'], 202);
+        return ApiResponse::success(null, 'Reply queued.', null, 202);
     }
 }

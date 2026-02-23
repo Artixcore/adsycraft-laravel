@@ -4,6 +4,7 @@
         <nav class="hidden sm:flex items-center gap-1" aria-label="Main">
             <a href="{{ route('dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('dashboard') && !request()->routeIs('dashboard.connectors') ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#1a1a1a] hover:text-zinc-900 dark:hover:text-white' }}">Mission Control</a>
             <a href="{{ route('dashboard.connectors') }}" class="px-3 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('dashboard.connectors') ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#1a1a1a] hover:text-zinc-900 dark:hover:text-white' }}">Connectors</a>
+            <a href="{{ route('dashboard.ad-library') }}" class="px-3 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('dashboard.ad-library') ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#1a1a1a] hover:text-zinc-900 dark:hover:text-white' }}">Ad Library</a>
             @if(auth()->user()?->role?->value === 'admin')
                 <a href="{{ route('admin.dashboard') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1c1c1a] hover:text-gray-900 dark:hover:text-white">Admin</a>
             @endif

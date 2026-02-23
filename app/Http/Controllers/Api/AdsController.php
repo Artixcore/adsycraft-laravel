@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdAccount;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,7 +26,7 @@ class AdsController extends Controller
 
         $accounts = $query->get();
 
-        return response()->json(['data' => $accounts]);
+        return ApiResponse::success($accounts);
     }
 
     public function campaigns(Request $request, AdAccount $adAccount): JsonResponse
@@ -37,6 +38,6 @@ class AdsController extends Controller
 
         $campaigns = $adAccount->campaigns()->orderBy('name')->get();
 
-        return response()->json(['data' => $campaigns]);
+        return ApiResponse::success($campaigns);
     }
 }
