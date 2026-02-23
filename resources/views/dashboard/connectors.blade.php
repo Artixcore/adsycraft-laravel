@@ -6,6 +6,16 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto space-y-8">
+    @if(request()->query('meta') === 'connected')
+        <div id="meta-success-banner" class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 px-4 py-3 text-sm text-green-800 dark:text-green-200">
+            Meta account connected successfully. Select your pages below.
+        </div>
+    @endif
+    @if(request()->query('meta') === 'error')
+        <div id="meta-error-banner" class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+            <span id="meta-error-reason">{{ request()->query('reason', 'Connection failed. Please try again.') }}</span>
+        </div>
+    @endif
     <x-card title="Select business">
         <div id="business-selector" class="space-y-2">
             <p class="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
@@ -13,37 +23,14 @@
     </x-card>
 
     <div id="connectors-content" class="hidden space-y-8">
-        <x-card title="AI Providers">
-            <div id="ai-connections-list" class="space-y-3 mb-6">
-                <p class="text-sm text-gray-500 dark:text-gray-400">No AI connections yet.</p>
-            </div>
-            <div class="border-t border-gray-200 dark:border-[#252523] pt-6">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Add connection</h3>
-                <form id="add-ai-connection-form" class="space-y-4 max-w-md">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Provider *</label>
-                        <select name="provider" required class="w-full rounded-lg border border-gray-300 dark:border-[#3E3E3A] dark:bg-[#161615] px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                            <option value="openai">OpenAI</option>
-                            <option value="gemini">Gemini</option>
-                            <option value="grok">Grok</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API key *</label>
-                        <input type="password" name="api_key" required minlength="10" placeholder="sk-… or your key" class="w-full rounded-lg border border-gray-300 dark:border-[#3E3E3A] dark:bg-[#161615] px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent" autocomplete="off">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Default model</label>
-                        <input type="text" name="default_model" placeholder="e.g. gpt-4" class="w-full rounded-lg border border-gray-300 dark:border-[#3E3E3A] dark:bg-[#161615] px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="is_primary" id="add_is_primary" value="1" class="rounded border-gray-300 dark:border-[#3E3E3A] text-indigo-600 focus:ring-indigo-500">
-                        <label for="add_is_primary" class="text-sm text-gray-700 dark:text-gray-300">Set as primary</label>
-                    </div>
-                    <x-button type="submit" variant="primary">Add</x-button>
-                </form>
-                <p id="ai-add-message" class="mt-2 text-sm hidden"></p>
-            </div>
+        <x-card title="AI">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                @if($ai_configured ?? false)
+                    <span class="text-green-600 dark:text-green-400">Configured.</span> AI providers are set via server environment variables.
+                @else
+                    <span class="text-amber-600 dark:text-amber-400">Not configured.</span> Set OPENAI_API_KEY, GEMINI_API_KEY, or GROK_API_KEY in .env.
+                @endif
+            </p>
         </x-card>
 
         <x-card title="Meta Connector">

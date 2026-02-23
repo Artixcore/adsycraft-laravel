@@ -60,11 +60,6 @@ class BusinessAccount extends Model
         return $this->hasMany(Post::class);
     }
 
-    public function aiConnections(): HasMany
-    {
-        return $this->hasMany(AiConnection::class);
-    }
-
     public function aiTaskProfiles(): HasMany
     {
         return $this->hasMany(AiTaskProfile::class);

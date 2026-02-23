@@ -57,6 +57,9 @@ return Application::configure(basePath: dirname(__DIR__))
             } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
                 $status = $e->getStatusCode();
                 $message = $e->getMessage() ?: 'Request failed.';
+            } elseif ($e instanceof \App\Exceptions\AIConfigurationException) {
+                $status = 503;
+                $message = $e->getMessage();
             }
 
             if ($status >= 500) {

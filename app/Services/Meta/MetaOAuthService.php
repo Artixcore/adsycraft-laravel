@@ -5,32 +5,40 @@ namespace App\Services\Meta;
 use App\Models\BusinessAccount;
 use App\Models\OAuthConnection;
 use App\Models\User;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class MetaOAuthService
 {
     private const STATE_TTL_SECONDS = 600;
 
-    public function getAuthUrl(BusinessAccount $business, User $user): string
+    private const SCOPES = [
+        'pages_show_list',
+        'pages_read_engagement',
+    ];
+
+    public function getAuthUrl(Request $request, BusinessAccount $business, User $user): string
     {
         $stub = config('services.meta.stub', false);
         if ($stub) {
-            $state = $this->encodeState($user->id, $business->id);
+            $state = $this->encodeState($user->id, $business->id, null);
+            $request->session()->put('meta_oauth_nonce', 'stub_nonce');
+
             return url('/connectors/meta/callback').'?code=stub_'.base64_encode($state).'&state='.urlencode($state);
         }
 
-        $state = $this->encodeState($user->id, $business->id);
+        $nonce = Str::random(32);
+        $request->session()->put('meta_oauth_nonce', $nonce);
+        $state = $this->encodeState($user->id, $business->id, $nonce);
+
         $version = config('services.meta.graph_version', 'v21.0');
         $base = 'https://www.facebook.com/'.$version.'/dialog/oauth';
         $params = http_build_query([
             'client_id' => config('services.meta.app_id'),
             'redirect_uri' => config('services.meta.redirect_uri'),
-            'scope' => implode(',', [
-                'pages_show_list',
-                'pages_manage_metadata',
-                'instagram_basic_profile',
-            ]),
+            'scope' => implode(',', self::SCOPES),
             'state' => $state,
             'response_type' => 'code',
         ]);
@@ -38,15 +46,20 @@ class MetaOAuthService
         return $base.'?'.$params;
     }
 
-    public function handleCallback(string $code, string $state): array
+    public function handleCallback(Request $request, string $code, string $state): array
     {
-        $payload = $this->decodeState($state);
+        $correlationId = $request->header('X-Request-ID') ?? Str::uuid()->toString();
+        $this->logSafe($correlationId, 'meta_oauth_callback_start', ['has_code' => ! empty($code), 'has_state' => ! empty($state)]);
+
+        $payload = $this->decodeState($request, $state);
         if (! $payload) {
+            $this->logSafe($correlationId, 'meta_oauth_state_invalid', []);
             throw new \InvalidArgumentException('Invalid or expired state.');
         }
 
         $business = BusinessAccount::find($payload['business_account_id']);
-        if (! $business || $business->user_id != $payload['user_id']) {
+        if (! $business || (int) $business->user_id !== (int) $payload['user_id']) {
+            $this->logSafe($correlationId, 'meta_oauth_business_mismatch', ['business_id' => $payload['business_account_id'] ?? null]);
             throw new \InvalidArgumentException('Business not found or access denied.');
         }
 
@@ -57,17 +70,21 @@ class MetaOAuthService
                 $connection->update([
                     'access_token' => 'stub_token_'.bin2hex(random_bytes(8)),
                     'expires_at' => now()->addDays(60),
-                    'scopes' => ['pages_show_list', 'pages_manage_metadata', 'instagram_basic_profile'],
+                    'scopes' => self::SCOPES,
                     'connected_at' => now(),
                     'meta_user_id' => 'stub_user_'.$payload['user_id'],
                 ]);
+                $this->logSafe($correlationId, 'meta_oauth_stub_connected', ['connection_id' => $connection->id]);
+
                 return ['connection' => $connection->fresh(), 'access_token' => $connection->access_token];
             }
             throw new \InvalidArgumentException('Invalid stub code.');
         }
 
+        $this->logSafe($correlationId, 'meta_oauth_exchanging_code', []);
         $tokenResponse = $this->exchangeCodeForToken($code);
         if (empty($tokenResponse['access_token'])) {
+            $this->logSafe($correlationId, 'meta_oauth_exchange_failed', []);
             throw new \RuntimeException('Failed to exchange code for token.');
         }
 
@@ -75,15 +92,31 @@ class MetaOAuthService
         $longLived = $this->exchangeForLongLivedToken($accessToken);
         if ($longLived) {
             $accessToken = $longLived;
+            $this->logSafe($correlationId, 'meta_oauth_long_lived_obtained', []);
         }
+
+        $debugData = $this->debugToken($accessToken);
+        $expiresAt = isset($debugData['expires_at']) ? \Carbon\Carbon::createFromTimestamp($debugData['expires_at']) : null;
+        $scopes = isset($debugData['scopes']) ? $debugData['scopes'] : (isset($tokenResponse['granted_scopes']) ? explode(',', $tokenResponse['granted_scopes']) : null);
+        if (! $expiresAt && isset($tokenResponse['expires_in'])) {
+            $expiresAt = now()->addSeconds((int) $tokenResponse['expires_in']);
+        }
+
+        $metaUserId = $debugData['user_id'] ?? $this->fetchMetaUserId($accessToken);
 
         $connection = $this->getOrCreateConnection($business);
         $connection->update([
             'access_token' => $accessToken,
-            'expires_at' => isset($tokenResponse['expires_in']) ? now()->addSeconds((int) $tokenResponse['expires_in']) : null,
-            'scopes' => isset($tokenResponse['granted_scopes']) ? explode(',', $tokenResponse['granted_scopes']) : null,
+            'expires_at' => $expiresAt,
+            'scopes' => $scopes,
             'connected_at' => now(),
-            'meta_user_id' => $this->fetchMetaUserId($accessToken),
+            'meta_user_id' => $metaUserId,
+        ]);
+
+        $this->logSafe($correlationId, 'meta_oauth_connected', [
+            'connection_id' => $connection->id,
+            'meta_user_id' => $metaUserId,
+            'expires_at' => $expiresAt?->toIso8601String(),
         ]);
 
         return ['connection' => $connection->fresh(), 'access_token' => $connection->access_token];
@@ -104,6 +137,7 @@ class MetaOAuthService
             return null;
         }
         $data = $response->json();
+
         return $data['access_token'] ?? null;
     }
 
@@ -117,30 +151,55 @@ class MetaOAuthService
         if (! $response->successful()) {
             return null;
         }
+
         return $response->json('data');
     }
 
-    private function encodeState(int $userId, int $businessAccountId): string
+    private function encodeState(int $userId, int $businessAccountId, ?string $nonce): string
     {
         $payload = [
             'user_id' => $userId,
             'business_account_id' => $businessAccountId,
-            'ts' => time(),
+            'nonce' => $nonce ?? Str::random(32),
+            'issued_at' => time(),
         ];
-        return base64_encode(Crypt::encryptString(json_encode($payload)));
+        $payloadJson = json_encode($payload);
+        $secret = config('services.meta.state_secret', config('app.key'));
+        $signature = hash_hmac('sha256', $payloadJson, $secret, true);
+
+        return base64_encode($payloadJson).'.'.base64_encode($signature);
     }
 
-    private function decodeState(string $state): ?array
+    private function decodeState(Request $request, string $state): ?array
     {
         try {
-            $json = Crypt::decryptString(base64_decode($state, true) ?: '');
-            $payload = json_decode($json, true);
-            if (! $payload || ! isset($payload['user_id'], $payload['business_account_id'], $payload['ts'])) {
+            $parts = explode('.', $state);
+            if (count($parts) !== 2) {
                 return null;
             }
-            if (time() - $payload['ts'] > self::STATE_TTL_SECONDS) {
+            [$payloadB64, $signatureB64] = $parts;
+            $payloadJson = base64_decode($payloadB64, true);
+            $signature = base64_decode($signatureB64, true);
+            if (! $payloadJson || ! $signature) {
                 return null;
             }
+            $secret = config('services.meta.state_secret', config('app.key'));
+            $expectedSignature = hash_hmac('sha256', $payloadJson, $secret, true);
+            if (! hash_equals($expectedSignature, $signature)) {
+                return null;
+            }
+            $payload = json_decode($payloadJson, true);
+            if (! $payload || ! isset($payload['user_id'], $payload['business_account_id'], $payload['nonce'], $payload['issued_at'])) {
+                return null;
+            }
+            if (time() - $payload['issued_at'] > self::STATE_TTL_SECONDS) {
+                return null;
+            }
+            $sessionNonce = $request->session()->pull('meta_oauth_nonce');
+            if ($sessionNonce === null || ! hash_equals($payload['nonce'], $sessionNonce)) {
+                return null;
+            }
+
             return $payload;
         } catch (\Throwable) {
             return null;
@@ -159,6 +218,7 @@ class MetaOAuthService
         if (! $response->successful()) {
             return [];
         }
+
         return $response->json();
     }
 
@@ -171,6 +231,7 @@ class MetaOAuthService
         if (! $response->successful()) {
             return null;
         }
+
         return $response->json('id');
     }
 
@@ -180,5 +241,10 @@ class MetaOAuthService
             ['provider' => OAuthConnection::PROVIDER_META],
             ['provider' => OAuthConnection::PROVIDER_META]
         );
+    }
+
+    private function logSafe(string $correlationId, string $event, array $context): void
+    {
+        Log::info("meta_oauth: {$event}", array_merge($context, ['correlation_id' => $correlationId]));
     }
 }

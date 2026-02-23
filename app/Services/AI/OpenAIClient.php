@@ -13,11 +13,19 @@ class OpenAIClient implements AIClientInterface
 
     public function request(string $prompt, array $options = []): array
     {
-        $preview = strlen($prompt) > 50 ? substr($prompt, 0, 50) . '…' : $prompt;
+        try {
+            $preview = strlen($prompt) > 50 ? substr($prompt, 0, 50).'…' : $prompt;
 
-        return [
-            'success' => true,
-            'content' => 'Stub OpenAI response for: ' . $preview,
-        ];
+            return [
+                'success' => true,
+                'content' => 'Stub OpenAI response for: '.$preview,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'content' => '',
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 }

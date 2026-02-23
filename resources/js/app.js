@@ -1,5 +1,7 @@
 import './bootstrap';
 import './app-ajax';
+import './theme-toggle';
+import './toast';
 
 /**
  * Modal: call window.openModal('modal-id') and window.closeModal('modal-id')

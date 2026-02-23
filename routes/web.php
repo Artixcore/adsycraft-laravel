@@ -11,7 +11,7 @@ use App\Http\Controllers\MetaOAuthCallbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('home');
 })->name('home');
 
 Route::get('/features', function () {
@@ -54,12 +54,18 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 
     Route::get('/dashboard/connectors', function () {
-        return view('dashboard.connectors');
+        return view('dashboard.connectors', [
+            'ai_configured' => app(\App\Services\AI\AIManager::class)->hasConfiguredProvider(),
+        ]);
     })->name('dashboard.connectors');
 
     Route::get('/dashboard/ad-library', function () {
         return view('dashboard.ad-library');
     })->name('dashboard.ad-library');
+
+    Route::get('/dashboard/calendar', function () {
+        return view('dashboard.calendar');
+    })->name('dashboard.calendar');
 });
 
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {

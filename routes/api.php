@@ -2,10 +2,10 @@
 
 use App\Http\Controllers\Api\AdLibraryController;
 use App\Http\Controllers\Api\AdsController;
-use App\Http\Controllers\Api\AiConnectionController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BrandVoiceController;
 use App\Http\Controllers\Api\BusinessAccountController;
+use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\MetaConnectorController;
 use App\Http\Controllers\Api\PageInsightController;
 use App\Http\Controllers\Api\PostController;
@@ -40,7 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('businesses/{business}/posts/{post}', [PostController::class, 'destroy'])->name('businesses.posts.destroy');
     Route::post('businesses/{business}/posts/{post}/schedule', [PostController::class, 'schedule'])->name('businesses.posts.schedule');
     Route::post('businesses/{business}/posts/{post}/publish', [PostController::class, 'publishNow'])->name('businesses.posts.publish');
-    Route::get('businesses/{business}/calendar', [PostController::class, 'calendar'])->name('businesses.calendar');
+    Route::get('businesses/{business}/posts/{post}/metrics', [PostController::class, 'metrics'])->name('businesses.posts.metrics');
+    Route::post('businesses/{business}/posts/{post}/regenerate', [PostController::class, 'regenerate'])->name('businesses.posts.regenerate');
+    Route::get('businesses/{business}/calendar', [CalendarController::class, 'index'])->name('businesses.calendar');
+    Route::get('businesses/{business}/calendar/day', [CalendarController::class, 'day'])->name('businesses.calendar.day');
+    Route::post('businesses/{business}/calendar/generate-day', [CalendarController::class, 'generateDay'])->name('businesses.calendar.generate-day');
     Route::get('businesses/{business}/insights', [PageInsightController::class, 'index'])->name('businesses.insights');
     Route::post('businesses/{business}/research/trigger', [ResearchController::class, 'trigger'])->name('businesses.research.trigger');
     Route::get('businesses/{business}/research/results', [ResearchController::class, 'results'])->name('businesses.research.results');
@@ -50,18 +54,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('ads/ad-accounts', [AdsController::class, 'adAccounts'])->name('ads.ad-accounts');
     Route::get('ads/ad-accounts/{ad_account}/campaigns', [AdsController::class, 'campaigns'])->name('ads.campaigns');
 
-    Route::get('businesses/{business}/ai-connections', [AiConnectionController::class, 'index'])->name('businesses.ai-connections.index');
-    Route::post('businesses/{business}/ai-connections', [AiConnectionController::class, 'store'])->name('businesses.ai-connections.store');
-    Route::put('businesses/{business}/ai-connections/{connection}', [AiConnectionController::class, 'update'])->name('businesses.ai-connections.update');
-    Route::delete('businesses/{business}/ai-connections/{connection}', [AiConnectionController::class, 'destroy'])->name('businesses.ai-connections.destroy');
-    Route::post('businesses/{business}/ai-connections/{connection}/make-primary', [AiConnectionController::class, 'makePrimary'])->name('businesses.ai-connections.make-primary');
-    Route::post('businesses/{business}/ai-connections/{connection}/test', [AiConnectionController::class, 'test'])->name('businesses.ai-connections.test');
-
     Route::get('businesses/{business}/connectors/meta/status', [MetaConnectorController::class, 'status'])->name('businesses.connectors.meta.status');
     Route::post('businesses/{business}/connectors/meta/auth-url', [MetaConnectorController::class, 'authUrl'])->name('businesses.connectors.meta.auth-url');
     Route::get('businesses/{business}/connectors/meta/assets', [MetaConnectorController::class, 'assets'])->name('businesses.connectors.meta.assets');
     Route::post('businesses/{business}/connectors/meta/assets/select', [MetaConnectorController::class, 'selectAssets'])->name('businesses.connectors.meta.assets.select');
     Route::post('businesses/{business}/connectors/meta/disconnect', [MetaConnectorController::class, 'disconnect'])->name('businesses.connectors.meta.disconnect');
+    Route::get('businesses/{business}/connectors/meta/debug', [MetaConnectorController::class, 'debug'])->name('businesses.connectors.meta.debug');
 
     Route::prefix('ad-library')->group(function () {
         Route::get('config', [AdLibraryController::class, 'config'])->name('ad-library.config');

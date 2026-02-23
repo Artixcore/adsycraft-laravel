@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Post extends Model
 {
@@ -65,5 +66,15 @@ class Post extends Model
     public function postLogs(): HasMany
     {
         return $this->hasMany(PostLog::class);
+    }
+
+    public function postMetric(): HasOne
+    {
+        return $this->hasOne(PostMetric::class);
+    }
+
+    public function getEngagementRateAttribute(): float
+    {
+        return $this->postMetric?->engagement_rate ?? 0.0;
     }
 }

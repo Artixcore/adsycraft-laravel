@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\BusinessAccount;
 use App\Models\Post;
+use App\Services\AI\AIManager;
 use App\Services\AI\StubCaptionGenerator;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -15,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-class GenerateDailyContentJob implements ShouldQueue, ShouldBeUnique
+class GenerateDailyContentJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -59,13 +60,13 @@ class GenerateDailyContentJob implements ShouldQueue, ShouldBeUnique
         $count = max(1, min(20, $count));
 
         $captions = null;
-        if ($business->aiConnections()->where('is_primary', true)->where('is_enabled', true)->exists()) {
+        if (app(AIManager::class)->hasConfiguredProvider()) {
             $captions = app(StubCaptionGenerator::class)->generate($business, $count, $date->toDateString());
         }
 
         for ($i = 0; $i < $count; $i++) {
             $scheduledAt = $date->copy()->setHour(8)->setMinute(0)->setSecond(0)->addHours($i * 3);
-            $caption = $captions[$i] ?? 'Generated post placeholder for ' . $scheduledAt->toDateTimeString();
+            $caption = $captions[$i] ?? 'Generated post placeholder for '.$scheduledAt->toDateTimeString();
 
             Post::create([
                 'business_account_id' => $business->id,

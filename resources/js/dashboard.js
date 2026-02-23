@@ -194,7 +194,7 @@ function loadCalendar(businessId, from = '', to = '') {
     const params = new URLSearchParams();
     params.set('from', from);
     params.set('to', to);
-    const url = `${API_BASE}/businesses/${businessId}/calendar?${params}`;
+    const url = `${API_BASE}/businesses/${businessId}/posts?${params}`;
     const listEl = document.getElementById('calendar-list');
     if (!listEl) return;
 

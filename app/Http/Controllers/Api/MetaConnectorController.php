@@ -20,9 +20,36 @@ class MetaConnectorController extends Controller
     {
         $this->authorizeForUser($request->user(), 'update', $business);
 
-        $url = $this->metaOAuthService->getAuthUrl($business, $request->user());
+        $url = $this->metaOAuthService->getAuthUrl($request, $business, $request->user());
 
-        return response()->json(['url' => $url]);
+        return ApiResponse::success(['url' => $url]);
+    }
+
+    public function debug(Request $request, BusinessAccount $business): JsonResponse
+    {
+        $this->authorizeForUser($request->user(), 'view', $business);
+
+        $connection = $business->oauthConnections()->where('provider', OAuthConnection::PROVIDER_META)->first();
+
+        if (! $connection || ! $connection->access_token) {
+            return ApiResponse::success([
+                'connected' => false,
+                'token_expires_at' => null,
+                'scopes' => null,
+                'connected_at' => null,
+                'meta_user_id' => null,
+            ]);
+        }
+
+        $data = [
+            'connected' => true,
+            'token_expires_at' => $connection->expires_at?->toIso8601String(),
+            'scopes' => $connection->scopes,
+            'connected_at' => $connection->connected_at?->toIso8601String(),
+            'meta_user_id' => $connection->meta_user_id,
+        ];
+
+        return ApiResponse::success($data);
     }
 
     public function status(Request $request, BusinessAccount $business): JsonResponse

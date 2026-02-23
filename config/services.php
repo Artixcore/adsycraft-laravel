@@ -35,12 +35,25 @@ return [
         ],
     ],
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
+    'grok' => [
+        'key' => env('GROK_API_KEY'),
+    ],
+
     'meta' => [
         'app_id' => env('META_APP_ID'),
         'app_secret' => env('META_APP_SECRET'),
         'redirect_uri' => env('META_REDIRECT_URI', env('APP_URL').'/connectors/meta/callback'),
         'webhook_verify_token' => env('META_WEBHOOK_VERIFY_TOKEN'),
         'graph_version' => env('META_GRAPH_VERSION', 'v21.0'),
+        'state_secret' => env('META_STATE_SECRET', env('APP_KEY')),
         'stub' => env('META_CONNECTOR_STUB', false),
         'ad_library' => [
             'enabled' => env('META_AD_LIBRARY_ENABLED', false),

@@ -10,6 +10,8 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Models\BusinessAccount;
 use App\Models\Post;
 use App\Models\PostLog;
+use App\Services\AI\AIManager;
+use App\Services\AI\StubCaptionGenerator;
 use App\Support\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +26,8 @@ class PostController extends Controller
         $request->validate([
             'status' => ['sometimes', 'string', 'in:scheduled,published,failed,draft,publishing,cancelled'],
             'meta_asset_id' => ['sometimes', 'integer', 'exists:meta_assets,id'],
+            'from' => ['sometimes', 'date_format:Y-m-d'],
+            'to' => ['sometimes', 'date_format:Y-m-d'],
         ]);
 
         $query = $business->posts()->orderBy('scheduled_at');
@@ -33,6 +37,12 @@ class PostController extends Controller
         }
         if ($request->filled('meta_asset_id')) {
             $query->where('meta_asset_id', $request->input('meta_asset_id'));
+        }
+        if ($request->filled('from')) {
+            $query->where('scheduled_at', '>=', Carbon::parse($request->input('from'))->startOfDay());
+        }
+        if ($request->filled('to')) {
+            $query->where('scheduled_at', '<=', Carbon::parse($request->input('to'))->endOfDay());
         }
 
         $items = $query->get();
@@ -113,25 +123,55 @@ class PostController extends Controller
         return ApiResponse::success($post, 'Post published.');
     }
 
-    public function calendar(Request $request, BusinessAccount $business): JsonResponse
+    public function metrics(Request $request, BusinessAccount $business, Post $post): JsonResponse
     {
         $this->authorizeForUser($request->user(), 'view', $business);
+        $this->ensurePostBelongsToBusiness($post, $business);
 
-        $request->validate([
-            'from' => ['sometimes', 'date_format:Y-m-d'],
-            'to' => ['sometimes', 'date_format:Y-m-d'],
-        ]);
+        $metric = $post->postMetric;
 
-        $query = $business->posts()->orderBy('scheduled_at');
+        $data = $metric ? [
+            'reach' => $metric->reach,
+            'impressions' => $metric->impressions,
+            'likes' => $metric->likes,
+            'comments' => $metric->comments,
+            'shares' => $metric->shares,
+            'saves' => $metric->saves,
+            'engagement_rate' => $metric->engagement_rate,
+            'fetched_at' => $metric->fetched_at?->toIso8601String(),
+        ] : [
+            'reach' => 0,
+            'impressions' => 0,
+            'likes' => 0,
+            'comments' => 0,
+            'shares' => 0,
+            'saves' => 0,
+            'engagement_rate' => null,
+            'fetched_at' => null,
+        ];
 
-        if ($request->filled('from')) {
-            $query->where('scheduled_at', '>=', Carbon::parse($request->input('from'))->startOfDay());
+        return ApiResponse::success($data);
+    }
+
+    public function regenerate(Request $request, BusinessAccount $business, Post $post): JsonResponse
+    {
+        $this->authorizeForUser($request->user(), 'update', $business);
+        $this->ensurePostBelongsToBusiness($post, $business);
+
+        if (! in_array($post->status, [Post::STATUS_DRAFT, Post::STATUS_SCHEDULED], true)) {
+            return ApiResponse::error('Only draft or scheduled posts can be regenerated.', null, 422);
         }
-        if ($request->filled('to')) {
-            $query->where('scheduled_at', '<=', Carbon::parse($request->input('to'))->endOfDay());
+
+        $captions = [];
+        if (app(AIManager::class)->hasConfiguredProvider()) {
+            $captions = app(StubCaptionGenerator::class)->generate($post->businessAccount, 1, $post->scheduled_at?->toDateString() ?? now()->toDateString());
         }
 
-        return ApiResponse::success($query->get());
+        $caption = $captions[0] ?? 'Regenerated placeholder caption';
+
+        $post->update(['caption' => $caption]);
+
+        return ApiResponse::success($post->fresh(['postMetric']), 'Caption regenerated.');
     }
 
     private function ensurePostBelongsToBusiness(Post $post, BusinessAccount $business): void
