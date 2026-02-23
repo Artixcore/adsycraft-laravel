@@ -30,6 +30,14 @@ Route::get('/faq', function () {
     return view('faq');
 })->name('faq');
 
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return view('terms');
+})->name('terms');
+
 Route::get('/api-docs', function () {
     return view('api-docs');
 })->name('api-docs');

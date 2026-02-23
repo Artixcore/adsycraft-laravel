@@ -61,15 +61,18 @@
         <footer class="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-6xl mx-auto">
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div class="flex items-center gap-6">
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6">
                         <a href="{{ route('features') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">Features</a>
                         <a href="{{ route('pricing') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">Pricing</a>
-                        <a href="{{ route('about') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">About</a>
                         <a href="{{ route('faq') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">FAQ</a>
+                        <a href="{{ route('about') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">About</a>
+                        <a href="{{ route('privacy') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">Privacy Policy</a>
+                        <a href="{{ route('terms') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">Terms of Service</a>
                         <a href="{{ route('login') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">Login</a>
+                        <a href="{{ route('register') }}" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition">Register</a>
                     </div>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-500">
-                        Developed by Artixcore – <a href="https://artixcore.com" target="_blank" rel="noopener" class="text-zinc-700 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">artixcore.com</a>
+                    <p class="text-sm text-zinc-500 dark:text-zinc-500 text-center sm:text-right">
+                        Developed by <a href="https://artixcore.com" target="_blank" rel="noopener" class="text-zinc-700 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Artixcore</a> – <a href="https://artixcore.com" target="_blank" rel="noopener" class="text-zinc-700 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">artixcore.com</a>
                     </p>
                 </div>
             </div>
