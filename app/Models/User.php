@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -25,9 +26,13 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'google_id',
+        'avatar',
+        'provider',
         'is_admin',
         'role',
         'last_login_at',
+        'preferences',
     ];
 
     /**
@@ -67,6 +72,7 @@ class User extends Authenticatable
             'is_admin' => 'boolean',
             'role' => Role::class,
             'last_login_at' => 'datetime',
+            'preferences' => 'array',
         ];
     }
 

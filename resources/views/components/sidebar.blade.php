@@ -8,7 +8,7 @@
         ['label' => 'Ad Library', 'href' => route('dashboard.ad-library'), 'route' => 'dashboard.ad-library', 'icon' => 'library'],
         ['label' => 'Ads', 'href' => route('dashboard.ads'), 'route' => 'dashboard.ads', 'icon' => 'megaphone'],
         ['label' => 'Reports', 'href' => '#', 'route' => null, 'icon' => 'reports'],
-        ['label' => 'Settings', 'href' => '#', 'route' => null, 'icon' => 'cog'],
+        ['label' => 'Settings', 'href' => route('dashboard.settings'), 'route' => 'dashboard.settings', 'icon' => 'cog'],
     ];
 @endphp
 

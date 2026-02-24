@@ -82,6 +82,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/growth-blueprint', function () {
         return view('dashboard.growth-blueprint');
     })->name('dashboard.growth-blueprint');
+
+    Route::get('/dashboard/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('dashboard.settings');
+    Route::post('/dashboard/settings/profile', [\App\Http\Controllers\SettingsController::class, 'updateProfile'])->name('dashboard.settings.profile');
+    Route::post('/dashboard/settings/email', [\App\Http\Controllers\SettingsController::class, 'updateEmail'])->name('dashboard.settings.email');
+    Route::post('/dashboard/settings/password', [\App\Http\Controllers\SettingsController::class, 'updatePassword'])->name('dashboard.settings.password');
+    Route::post('/dashboard/settings/preferences', [\App\Http\Controllers\SettingsController::class, 'updatePreferences'])->name('dashboard.settings.preferences');
+    Route::post('/dashboard/settings/notifications', [\App\Http\Controllers\SettingsController::class, 'updateNotifications'])->name('dashboard.settings.notifications');
+    Route::post('/dashboard/settings/security/logout-other-sessions', [\App\Http\Controllers\SettingsController::class, 'logoutOtherSessions'])->name('dashboard.settings.security.logout-other-sessions');
+    Route::get('/dashboard/settings/2fa/setup', [\App\Http\Controllers\SettingsController::class, 'twoFactorSetup'])->middleware('password.confirm')->name('dashboard.settings.2fa.setup');
+    Route::get('/dashboard/settings/2fa/recovery-codes', [\App\Http\Controllers\SettingsController::class, 'twoFactorRecoveryCodes'])->middleware('password.confirm')->name('dashboard.settings.2fa.recovery-codes');
 });
 
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {

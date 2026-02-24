@@ -5,7 +5,7 @@
 ])
 
 @php
-    $base = 'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:pointer-events-none';
+    $base = 'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 disabled:opacity-50 disabled:pointer-events-none';
     $classes = match($variant) {
         'primary' => 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500',
         'secondary' => 'border border-gray-300 dark:border-[#3E3E3A] bg-white dark:bg-[#161615] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1c1c1a] focus:ring-gray-500',

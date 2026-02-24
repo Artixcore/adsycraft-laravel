@@ -7,31 +7,34 @@ function getCsrfToken() {
 }
 
 /**
- * Show toast notification. Type: success, error, warning, info
+ * Show toast - delegates to global showToast (from toast.js) when available.
+ * Use: showToast({ type: 'error', message: '...' })
  */
-function showToast(type, message) {
+function showToast(opts) {
+    const { type = 'info', message = '' } = typeof opts === 'object' ? opts : { type: opts, message: '' };
+    if (typeof window.showToast === 'function') {
+        window.showToast({ type, message });
+        return;
+    }
     const container = document.getElementById('toast-container');
     if (!container) return;
+    const variantClasses = {
+        success: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/40 text-green-800 dark:text-green-200',
+        error: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200',
+        warning: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200',
+        info: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200',
+    };
+    const variant = variantClasses[type] || variantClasses.info;
     const toast = document.createElement('div');
     toast.setAttribute('role', 'alert');
-    const bg = {
-        success: 'bg-green-600',
-        error: 'bg-red-600',
-        warning: 'bg-amber-600',
-        info: 'bg-indigo-600',
-    }[type] || 'bg-indigo-600';
-    toast.className = `pointer-events-auto rounded-lg px-4 py-3 text-sm text-white shadow-lg flex items-center justify-between gap-3 ${bg}`;
+    toast.className = `pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 shadow-md ${variant}`;
     toast.innerHTML = `
-        <span class="flex-1">${escapeHtml(String(message))}</span>
-        <button type="button" class="shrink-0 text-white/80 hover:text-white" aria-label="Close">×</button>
+        <span class="flex-1 text-sm font-medium">${escapeHtml(String(message))}</span>
+        <button type="button" data-toast-dismiss aria-label="Dismiss" class="shrink-0 rounded-lg p-1 opacity-70 hover:opacity-100">×</button>
     `;
     container.appendChild(toast);
-    const closeBtn = toast.querySelector('button');
-    const remove = () => {
-        toast.remove();
-    };
-    closeBtn.addEventListener('click', remove);
-    setTimeout(remove, 4000);
+    toast.querySelector('[data-toast-dismiss]')?.addEventListener('click', () => toast.remove());
+    setTimeout(() => toast.remove(), 5000);
 }
 
 function escapeHtml(text) {
@@ -97,7 +100,7 @@ function handleHttpError(jqXHR) {
     const message = data.message || getDefaultErrorMessage(status);
 
     if (status === 401 || status === 419) {
-        showToast('error', 'Session expired. Redirecting to login.');
+        showToast({ type: 'error', message: 'Session expired. Redirecting to login.' });
         setTimeout(() => {
             window.location.href = LOGIN_URL;
         }, 1500);
@@ -105,21 +108,21 @@ function handleHttpError(jqXHR) {
     }
 
     if (status === 403) {
-        showToast('error', message);
+        showToast({ type: 'error', message });
         return { message, errors: data.errors };
     }
 
     if (status === 422) {
-        showToast('error', message);
+        showToast({ type: 'error', message });
         return { message, errors: data.errors || null };
     }
 
     if (status >= 500 || status === 0) {
-        showToast('error', 'Something went wrong. Please try again.');
+        showToast({ type: 'error', message: 'Something went wrong. Please try again.' });
         return { message, errors: null };
     }
 
-    showToast('error', message);
+    showToast({ type: 'error', message });
     return { message, errors: data.errors };
 }
 
@@ -171,9 +174,8 @@ function ajaxRequest(options) {
         });
 }
 
-// Export for global use
+// Export for global use (showToast is provided by toast.js)
 window.getCsrfToken = getCsrfToken;
-window.showToast = showToast;
 window.setLoading = setLoading;
 window.renderFieldErrors = renderFieldErrors;
 window.clearFieldErrors = clearFieldErrors;

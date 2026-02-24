@@ -14,7 +14,7 @@
     <div class="flex min-h-screen">
         <x-sidebar />
 
-        <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-zinc-900/50 backdrop-blur-sm lg:hidden hidden" aria-hidden="true"></div>
+        <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-zinc-900/50 backdrop-blur-sm lg:hidden hidden" aria-hidden="true" role="presentation"></div>
 
         <div class="flex flex-1 flex-col min-w-0">
             <x-navbar />
@@ -38,16 +38,24 @@
             function openSidebar() {
                 sidebar?.classList.remove('-translate-x-full');
                 overlay?.classList.remove('hidden');
+                overlay?.setAttribute('aria-hidden', 'false');
                 document.body.classList.add('overflow-hidden');
+                toggleBtn?.setAttribute('aria-expanded', 'true');
             }
             function closeSidebar() {
                 sidebar?.classList.add('-translate-x-full');
                 overlay?.classList.add('hidden');
+                overlay?.setAttribute('aria-hidden', 'true');
                 document.body.classList.remove('overflow-hidden');
+                toggleBtn?.setAttribute('aria-expanded', 'false');
             }
             toggleBtn?.addEventListener('click', openSidebar);
             closeBtn?.addEventListener('click', closeSidebar);
             overlay?.addEventListener('click', closeSidebar);
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeSidebar();
+            });
 
             userMenuBtn?.addEventListener('click', function() {
                 userMenu?.classList.toggle('hidden');

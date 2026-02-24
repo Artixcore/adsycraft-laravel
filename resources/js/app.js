@@ -25,4 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modal) modal.classList.add('hidden');
         });
     });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('[role="dialog"][aria-modal="true"]:not(.hidden)').forEach((modal) => {
+                modal.classList.add('hidden');
+            });
+        }
+    });
 });
